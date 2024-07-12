@@ -1,0 +1,56 @@
+/* App.css */
+
+body {
+  font-family: 'Times New Roman', Times, serif;
+  margin: 0;
+  padding: 0;
+}
+
+h2 {
+  font-family: cursive;
+  color: rgb(135, 158, 154) !important;;
+}
+
+h3 {
+  color: #CCB268 !important;
+  font-family: cursive;
+}
+
+button {
+  background-color: #CCB268;
+  color: white;
+  border: none;
+  padding: 6px 20px;
+  border-radius: 5px !important;
+  cursor: pointer;
+  font-size: large;
+  font-family: cursive;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: white; /* Optional: add background to avoid content behind the logo */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 6px 0; 
+}
+
+.logo {
+  max-width: 50%; /* Adjust as necessary */
+  height: auto;
+}
+
+.main-content {
+  padding-top: 70px; /* Adjust based on the height of the logo-container */
+}
+
+.sign-out {
+  margin-right: 10px;
+  margin-top: -10px !important;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 2rem; /* Adjust the size as needed */
+}
