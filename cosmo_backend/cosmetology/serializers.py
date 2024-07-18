@@ -56,3 +56,17 @@ class SummaryDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = SummaryDetail
         fields = '__all__'
+
+
+from .models import Visit
+class VisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Visit
+        fields = '__all__'
+
+
+from .models import Vital
+class VitalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vital
+        fields = '__all__'

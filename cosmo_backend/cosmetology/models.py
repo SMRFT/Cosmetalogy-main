@@ -22,6 +22,7 @@ class Pharmacy(models.Model):
     medicine_name = models.CharField(max_length=255, unique=True)
     company_name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    GST = models.CharField(max_length=200)
     new_stock = models.IntegerField()
     old_stock = models.IntegerField()
     received_date = models.DateField()
@@ -73,7 +74,7 @@ class Appointment(models.Model):
 
 
 class SummaryDetail(models.Model):
-    patient_name = models.CharField(max_length=100)  # Add this line
+    patient_name = models.CharField(max_length=100)
     diagnosis = models.TextField(blank=True)
     complaints = models.TextField(blank=True)
     findings = models.TextField(blank=True)
@@ -81,9 +82,32 @@ class SummaryDetail(models.Model):
     plans = models.TextField(blank=True)
     tests = models.TextField(blank=True)
     procedures = models.TextField(blank=True)
-    date = models.DateField(auto_now_add=True)  # Automatically set the field to the current date when the object is created
-
+    uploadedImages = models.JSONField(default=list, blank=True)  # Store images as JSON
+    nextVisit = models.TextField(blank=True)  # Assuming this is for next visit details
+    date = models.DateField(auto_now_add=True)  # Automatically set the date when the object is created
+    time = models.CharField(max_length=8, blank=True)  # Custom field to store current time in HH:MM:SS format
+    def save(self, *args, **kwargs):
+        # Set current Indian Standard Time (IST)
+        tz = timezone.get_current_timezone()
+        current_time = timezone.localtime(timezone.now(), tz).strftime('%H:%M:%S')
+        self.time = current_time
+        super().save(*args, **kwargs)
     def __str__(self):
         return self.diagnosis
 
 
+class Visit(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    visit_date = models.DateTimeField(auto_now_add=True)
+
+
+class Vital(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    height = models.CharField(max_length=10)
+    weight = models.CharField(max_length=10)
+    pulseRate = models.CharField(max_length=10)
+    bloodPressure = models.CharField(max_length=10)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.patient.patientName} - {self.recorded_at}"

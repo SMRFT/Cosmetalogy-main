@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Container, Row, Col, Alert } from 'react-bootstrap';
+import { Form, Container, Row, Col, Alert, Modal, Button } from 'react-bootstrap';
 import axios from 'axios';
+import { LiaFileMedicalAltSolid } from "react-icons/lia";
 import './PatientForm.css'; // Import the CSS file
+import styled from 'styled-components';
+import VitalForm from './VitalForm'; // Import VitalForm
 
 // Import images
 import maleIcon from './images/male-gender.png';
@@ -23,6 +26,7 @@ const PatientForm = () => {
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [showModal, setShowModal] = useState(false); // State to control modal visibility
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,9 +55,17 @@ const PatientForm = () => {
       });
   };
 
+  const handleModalOpen = () => setShowModal(true); // Open modal
+  const handleModalClose = () => setShowModal(false); // Close modal
+
   return (
     <Container className="form-container">
+      <VitalFormIcon className='mt-2' title='Vital Form' onClick={handleModalOpen}>
+      <LiaFileMedicalAltSolid />
+      </VitalFormIcon>
+      <br/>
       <Form onSubmit={handleSubmit}>
+        {/* Existing form fields */}
         <Row>
           <Col>
             <Form.Group controlId="patientName">
@@ -135,7 +147,7 @@ const PatientForm = () => {
         <Row>
           <Col>
             <Form.Group controlId="email">
-              <Form.Label>Email</Form.Label>
+              <Form.Label>Email Address <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="email"
                 name="email"
@@ -147,8 +159,37 @@ const PatientForm = () => {
             </Form.Group>
           </Col>
           <Col>
+            <Form.Group controlId="bloodGroup">
+              <Form.Label>Blood Group</Form.Label>
+              <Form.Control
+                type="text"
+                name="bloodGroup"
+                value={formData.bloodGroup}
+                onChange={handleChange}
+                required
+                className="custom-input"
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+        <br />
+        <Row>
+          <Col>
+            <Form.Group controlId="language">
+              <Form.Label>Language</Form.Label>
+              <Form.Control
+                type="text"
+                name="language"
+                value={formData.language}
+                onChange={handleChange}
+                required
+                className="custom-input"
+              />
+            </Form.Group>
+          </Col>
+          <Col>
             <Form.Group controlId="purposeOfVisit">
-              <Form.Label>Purpose Of Visit</Form.Label>
+              <Form.Label>Purpose of Visit <span className="text-danger">*</span></Form.Label>
               <Form.Control
                 type="text"
                 name="purposeOfVisit"
@@ -163,57 +204,10 @@ const PatientForm = () => {
         <br />
         <Row>
           <Col>
-            <Form.Group controlId="bloodGroup">
-              <Form.Label>Blood Group</Form.Label>
-              <Form.Select
-                as="select"
-                name="bloodGroup"
-                value={formData.bloodGroup}
-                onChange={handleChange}
-                required
-                className="custom-input"
-              >
-                <option value="">Select Blood Group</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-              </Form.Select>
-            </Form.Group>
-          </Col>
-          <Col>
-            <Form.Group controlId="language">
-              <Form.Label>Preferred Language</Form.Label>
-              <Form.Select
-                as="select"
-                name="language"
-                value={formData.language}
-                onChange={handleChange}
-                required
-                className="custom-input"
-              >
-                <option value="">Select Language</option>
-                <option value="Tamil">Tamil</option>
-                <option value="English">English</option>
-                <option value="Hindi">Hindi</option>
-                <option value="Spanish">Spanish</option>
-                <option value="French">French</option>
-              </Form.Select>
-            </Form.Group>
-          </Col>
-        </Row>
-        <br />
-        <Row>
-          <Col>
             <Form.Group controlId="address">
               <Form.Label>Address</Form.Label>
               <Form.Control
                 as="textarea"
-                rows={3}
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
@@ -224,14 +218,33 @@ const PatientForm = () => {
           </Col>
         </Row>
         <br />
+        <Row>
+          <Col>
+            <button type="submit" className="custom-button">Submit</button>
+          </Col>
+        </Row>
         {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
         {successMessage && <Alert variant="success">{successMessage}</Alert>}
-        <button type="submit">
-          Submit
-        </button>
       </Form>
+      {/* Modal for VitalForm */}
+      <Modal show={showModal} onHide={handleModalClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Vital Form</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <VitalForm patientName={formData.patientName} mobileNumber={formData.mobileNumber} />
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };
 
+const VitalFormIcon = styled.div`
+  position: absolute;
+  top: 5px;
+  right: 25px;
+  cursor: pointer;
+  font-size: 2.5rem;
+  color: black;
+`
 export default PatientForm;

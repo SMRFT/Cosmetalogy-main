@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VscAccount } from "react-icons/vsc";
 import { Tooltip } from 'react-tooltip';
+import styled from 'styled-components';
 
 const SignOut = () => {
   const navigate = useNavigate();
@@ -29,12 +30,11 @@ const SignOut = () => {
   };
 
   return (
-    <div className="sign-out" style={{ position: 'relative', display: 'inline-block' }}>
+    <SignOutIcon>
       <VscAccount
         data-tooltip-id="accountTooltip"
         onClick={handleIconClick}
-        style={{ cursor: 'pointer' }}
-      />
+      /><SignOutIcon/>
       <Tooltip id="accountTooltip" place="bottom" effect="solid" className="custom-tooltip">
         <div style={{ fontSize: '0.875rem', padding: '5px 10px' }}>
           <div>{userName}</div>
@@ -58,8 +58,30 @@ const SignOut = () => {
           <button style={{ width: "100%", whiteSpace: 'nowrap', fontSize: '1rem' }} onClick={handleSignOut}>Sign Out</button>
         </div>
       )}
-    </div>
+    </SignOutIcon>
   );
 };
+
+
+const SignOutIcon = styled.div`
+  position: fixed;
+  top: 28px;
+  right: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+
+  svg {
+    font-size: 2rem;
+    color: grey;
+  }
+
+  &:hover {
+    svg {
+      color: black;
+    }
+  }
+`;
+
+
 
 export default SignOut;

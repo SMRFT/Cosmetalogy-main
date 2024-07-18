@@ -227,3 +227,42 @@ def get_summary_by_interval(request, interval):
     return JsonResponse(serializer.data, safe=False)
 
     
+
+from .models import Visit
+from .serializers import VisitSerializer
+@api_view(['GET'])
+def follow_up_details(request, patient_id):
+    try:
+        patient = Patient.objects.get(patientId=patient_id)
+    except Patient.DoesNotExist:
+        return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    visits = Visit.objects.filter(patient=patient)
+    visit_count = visits.count()
+    visit_data = VisitSerializer(visits, many=True).data
+
+    response_data = {
+        'patient': {
+            'id': patient.id,
+            'name': patient.name,
+            'email': patient.email,
+            'patientId': patient.patientId,
+        },
+        'visit_count': visit_count,
+        'visits': visit_data,
+    }
+    print('response_data: ',response_data)
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+from .serializers import VitalSerializer
+@api_view(['POST'])
+@csrf_exempt
+def vitalform(request):
+    if request.method == 'POST':
+        serializer = VitalSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

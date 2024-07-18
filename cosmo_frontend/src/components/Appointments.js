@@ -126,7 +126,8 @@ const Appointment = ({}) => {
     };
 
     return (
-        <StyledContainer>
+        <div>
+        <StyledContainer className='mt-4'>
             <h3 className="text-center mb-4">Appointment</h3>
             <ListGroupContainer>
                 <div className="text-center mb-4">
@@ -173,9 +174,9 @@ const Appointment = ({}) => {
                 </Modal.Body>
             </Modal>
         </StyledContainer>
+        </div>
     );
 };
-
 const StyledContainer = styled(Container)`
     padding: 20px;
     max-width: 700px;

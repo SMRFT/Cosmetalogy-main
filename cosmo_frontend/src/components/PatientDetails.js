@@ -55,7 +55,7 @@ const PatientDetails = ({ onSelectPatient }) => {
     };
 
     return (
-        <div className="patient">
+        <div className="patient mt-4">
             <h3 className='text-center mb-2'>Patient Details</h3>
             <header className="header1">
                 <div className="search-bar" style={{width:"30%"}}>

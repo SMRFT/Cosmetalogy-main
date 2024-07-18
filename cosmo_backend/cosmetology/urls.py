@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import registration,login,pharmacy_data,check_medicine_status,pharmacy_upload,delete_medicine
-from .views import Patients_data,PatientView,Appointmentpost,AppointmentView,SummaryDetailCreate,get_summary_by_interval
+from .views import registration,login,pharmacy_data,check_medicine_status,pharmacy_upload,delete_medicine,follow_up_details
+from .views import Patients_data,PatientView,Appointmentpost,AppointmentView,SummaryDetailCreate,get_summary_by_interval,vitalform
 
 urlpatterns = [
     path('registration/', registration, name='registration'),
@@ -15,4 +15,6 @@ urlpatterns = [
     path('AppointmentView/', AppointmentView, name='AppointmentView'),
     path('summary/post/', SummaryDetailCreate, name='summary-create'),
     path('summary/<str:interval>/', get_summary_by_interval, name='summary-by-interval'),
+    path('follow-up-details/<str:patient_id>/', follow_up_details, name='follow-up-details'),
+    path('vitalform/', vitalform, name='vitalform'),
 ]

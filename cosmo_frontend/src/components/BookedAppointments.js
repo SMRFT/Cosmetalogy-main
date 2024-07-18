@@ -15,7 +15,7 @@ function BookedAppointments() {
     const [currentPage, setCurrentPage] = useState(0);
     const navigate = useNavigate();
 
-    const cardsPerPage = 4; // Adjust this number based on how many cards you want to display per page
+    const cardsPerPage = 8; // Adjust this number based on how many cards you want to display per page (2 rows of 4 cards each)
 
     useEffect(() => {
         fetchAppointments();
@@ -95,11 +95,15 @@ function BookedAppointments() {
     const currentSlots = timeSlots.slice(currentPage * cardsPerPage, (currentPage + 1) * cardsPerPage);
 
     return (
-        <div className="appointments-container">
-            <h3 className="text-center mb-4 mt-2">Booked Appointments</h3>
+        <div className="appointments-container mt-4">
+            <h3 className="text-center mb-4">Booked Appointments</h3>
             <div className="date-picker-wrapper">
                 <input type="date" value={selectedDate} onChange={handleDateChange} className="date-picker" />
             </div>
+            <Pagination>
+                <PaginationButton onClick={prevPage} disabled={currentPage === 0}>Previous</PaginationButton>
+                <PaginationButton onClick={nextPage} disabled={(currentPage + 1) * cardsPerPage >= timeSlots.length}>Next</PaginationButton>
+            </Pagination>
             <div className="appointments-list">
                 {currentSlots.map((timeSlot, index) => {
                     const { start, end } = timeSlot;
@@ -133,7 +137,7 @@ function BookedAppointments() {
                                 {hasAppointments && (
                                     <div className="flip-card-back">
                                         <AppointmentDetails>
-                                            <h2>Appointment Details</h2>
+                                            <h3 style={{fontSize:"1.5rem"}}>Appointment Details</h3>
                                             {hasAppointments && (
                                                 <center><Button className='mt-4' onClick={() => handleViewDetailsClick(appointmentsInSlot[0])}>View Details</Button></center>
                                             )}
@@ -145,10 +149,6 @@ function BookedAppointments() {
                     );
                 })}
             </div>
-            <Pagination>
-                <PaginationButton onClick={prevPage} disabled={currentPage === 0}>Previous</PaginationButton>
-                <PaginationButton onClick={nextPage} disabled={(currentPage + 1) * cardsPerPage >= timeSlots.length}>Next</PaginationButton>
-            </Pagination>
         </div>
     );
 }
@@ -215,10 +215,11 @@ const FlipCard = styled.div`
 
 const Pagination = styled.div`
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
+    width: 100%;
     padding: 20px;
-    gap:20px;
-    float:right;
+    box-sizing: border-box;
+    gap: 20px;
 `;
 
 const PaginationButton = styled.button`
@@ -228,6 +229,16 @@ const PaginationButton = styled.button`
     border: none;
     border-radius: 5px;
     cursor: pointer;
+
+    @media (max-width: 768px) {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
 `;
 
 export default BookedAppointments;

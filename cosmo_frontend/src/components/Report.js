@@ -8,14 +8,13 @@ import { startOfWeek, startOfMonth, addWeeks, format } from 'date-fns';
 
 const Report = () => {
   const [summaryData, setSummaryData] = useState(null);
-  const [selectedInterval, setSelectedInterval] = useState('day'); // Default interval
+  const [selectedInterval, setSelectedInterval] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedWeek, setSelectedWeek] = useState(null);
 
   useEffect(() => {
     if (selectedInterval === 'week' && !selectedWeek) {
-      // Automatically set the week to the start of the selected date's week if not already set
-      setSelectedWeek(startOfWeek(selectedDate, { weekStartsOn: 1 })); // Assuming week starts on Monday
+      setSelectedWeek(startOfWeek(selectedDate, { weekStartsOn: 1 }));
     }
     fetchData(selectedInterval);
   }, [selectedInterval, selectedDate, selectedWeek]);
@@ -32,7 +31,7 @@ const Report = () => {
     }
 
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/summary/${interval}?date=${dateParam}`); // Replace with your API endpoint
+      const response = await axios.get(`http://127.0.0.1:8000/summary/${interval}?date=${dateParam}`);
       setSummaryData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -41,7 +40,7 @@ const Report = () => {
 
   const handleIntervalChange = (interval) => {
     setSelectedInterval(interval);
-    setSelectedWeek(null); // Reset selected week when interval changes
+    setSelectedWeek(null);
   };
 
   const handleDateChange = (date) => {
@@ -67,7 +66,7 @@ const Report = () => {
   return (
     <Container>
       <Header>
-        <h2>Summary Report</h2>
+        <h3 className='text-center mb-2'>Billing Report</h3>
       </Header>
       <IntervalSelector>
         <ButtonGroup>
@@ -137,12 +136,13 @@ const Report = () => {
       <Content>
         {summaryData ? (
           <Summary>
-            <h3 className='text-center'>{selectedInterval} Summary</h3>
-            <MDBTable align='middle'>
-              <MDBTableHead align='middle' style={{ whiteSpace: "nowrap", backgroundColor: "rgb(251,251,251)" }}>
+            <h4 className='text-center'>{selectedInterval} Wise Billing Report</h4>
+            <StyledTable align='middle'>
+              <MDBTableHead align='middle'>
                 <tr>
                   <th>Patient Name</th>
                   <th>Date</th>
+                  <th>Time</th>
                   <th>Diagnosis</th>
                   <th>Complaints</th>
                   <th>Findings</th>
@@ -154,9 +154,10 @@ const Report = () => {
               </MDBTableHead>
               <MDBTableBody>
                 {summaryData.map((item) => (
-                  <tr key={item.id}>
-                    <td style={{ whiteSpace: "nowrap" }}>{item.patient_name}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>{item.date}</td>
+                  <StyledRow key={item.id}>
+                    <td>{item.patient_name}</td>
+                    <td>{item.date}</td>
+                    <td>{item.time}</td>
                     <td>{item.diagnosis}</td>
                     <td>{item.complaints}</td>
                     <td>{item.findings}</td>
@@ -164,10 +165,10 @@ const Report = () => {
                     <td>{item.plans}</td>
                     <td>{item.tests}</td>
                     <td>{item.procedures}</td>
-                  </tr>
+                  </StyledRow>
                 ))}
               </MDBTableBody>
-            </MDBTable>
+            </StyledTable>
           </Summary>
         ) : (
           <Message>Loading...</Message>
@@ -183,11 +184,9 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   padding: 20px;
-  margin-top: -60px;
 `;
 
 const Header = styled.div`
-  text-align: center;
   margin-bottom: 20px;
 `;
 
@@ -258,8 +257,49 @@ const Summary = styled.div`
   overflow-x: auto;
 `;
 
+const StyledTable = styled(MDBTable)`
+  width: 100%;
+  border-collapse: collapse;
+  font-family: cursive;
+
+  th {
+    background-color: rgb(125,163,158);
+    color: white;
+    white-space: nowrap;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  td {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    text-align: center;
+    color: black;
+  }
+
+  th,
+  td {
+    &:first-child {
+      border-left: none;
+    }
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+`;
+
+const StyledRow = styled.tr`
+  &:hover {
+    background-color: #e9ecef;
+  }
+`;
+
 const Message = styled.p`
   color: #6c757d;
   text-align: center;
   margin-top: 20px;
 `;
+

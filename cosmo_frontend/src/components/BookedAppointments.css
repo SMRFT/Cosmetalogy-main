@@ -7,7 +7,6 @@
     flex-direction: column;
     align-items: center;
     font-family: cursive;
-    margin-top: -70px;
 }
 
 /* Date Picker Wrapper */
@@ -15,7 +14,6 @@
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
 }
 
 .date-picker {
@@ -23,7 +21,6 @@
     font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    margin-bottom: 10px;
     cursor: pointer;
 }
 

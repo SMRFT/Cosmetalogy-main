@@ -39,20 +39,16 @@ const Login = ({ title, endpoint, setUserRole }) => {
         localStorage.setItem('userEmail', responseData.email); // Ensure this line is added
         console.log('User Role after login:', userRole);
         console.log('Email after login:', responseData.email);
-  
+
         setUserRole(userRole);  // Update state immediately
 
         // Navigation logic based on role
         if (userRole === 'Pharmacist' && endpoint === 'PharmacistLogin') {
           navigate('/Pharmacy');
         } else if (userRole === 'Receptionist' && endpoint === 'ReceptionistLogin') {
-          navigate('/Reception');
+          navigate('/Reception/PatientDetails'); // Adjusted path to a specific section in Reception
         } else if (userRole === 'Doctor' && endpoint === 'DoctorLogin') {
-          navigate('/Doctor');
-        } else if (userRole === 'Doctor' && endpoint === 'PharmacistLogin') {
-          navigate('/Pharmacy');
-        } else if (userRole === 'Doctor' && endpoint === 'ReceptionistLogin') {
-          navigate('/Reception');
+          navigate('/Doctor/PatientDetails'); // Adjusted path to a specific section in Doctor
         } else {
           setError('Access denied');
         }
@@ -66,49 +62,47 @@ const Login = ({ title, endpoint, setUserRole }) => {
   };
 
   return (
-    <div>
-    <div className="login mt-3">
-      <StyledContainer className="login-container">
-      <h2 className="text-center mb-5">{title}</h2>
-        <Form onSubmit={handleSubmit}>
-          <Row className="mb-3">
-            <Form.Group controlId="formUsername">
-              <Form.Label>Username</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="off"
-                required
-                style={{ border: "1px solid #b5e0e6" }}
-              />
-              <Form.Control.Feedback type="invalid">Username is required.</Form.Control.Feedback>
-            </Form.Group>
-          </Row>
-          <Row className="mb-3">
-            <Form.Group controlId="formPassword">
-              <Form.Label>Password</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-                style={{ border: "1px solid #b5e0e6" }}
-              />
-              <Form.Control.Feedback type="invalid">Password is required.</Form.Control.Feedback>
-            </Form.Group>
-          </Row>
-          {error && <div className="text-danger mb-3">{error}</div>}
-          <center>
-            <button type="submit" className="mb-3">Login</button>
-          </center>
-        </Form>
-      </StyledContainer>
-    </div>
-    </div>
+      <div className="login mt-3">
+        <StyledContainer className="login-container">
+          <h2 className="text-center mb-5">{title}</h2>
+          <Form onSubmit={handleSubmit}>
+            <Row className="mb-3">
+              <Form.Group controlId="formUsername">
+                <Form.Label>Username</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="off"
+                  required
+                  style={{ border: "1px solid #b5e0e6" }}
+                />
+                <Form.Control.Feedback type="invalid">Username is required.</Form.Control.Feedback>
+              </Form.Group>
+            </Row>
+            <Row className="mb-3">
+              <Form.Group controlId="formPassword">
+                <Form.Label>Password</Form.Label>
+                <Form.Control
+                  type="password"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                  style={{ border: "1px solid #b5e0e6" }}
+                />
+                <Form.Control.Feedback type="invalid">Password is required.</Form.Control.Feedback>
+              </Form.Group>
+            </Row>
+            {error && <div className="text-danger mb-3">{error}</div>}
+            <center>
+              <button type="submit" className="mb-3">Login</button>
+            </center>
+          </Form>
+        </StyledContainer>
+      </div>
   );
 };
 
@@ -124,7 +118,6 @@ const StyledContainer = styled.div`
   flex-direction: column;
   justify-content: center;
 `;
-
 
 const PharmacistLogin = ({ setUserRole }) => <Login title="Pharmacist Login" endpoint="PharmacistLogin" setUserRole={setUserRole} />;
 const DoctorLogin = ({ setUserRole }) => <Login title="Doctor Login" endpoint="DoctorLogin" setUserRole={setUserRole} />;

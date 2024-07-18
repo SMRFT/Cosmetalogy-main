@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Col, Row, Form, Tab, Nav } from 'react-bootstrap';
 import styled from 'styled-components';
@@ -11,26 +11,25 @@ import female from './images/female.png';
 import { BsPatchPlusFill } from "react-icons/bs";
 import { MdDelete } from "react-icons/md";
 import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { FaCalendarAlt } from 'react-icons/fa';
 
 const SectionTitle = styled.h4`
   margin-top: 20px;
   text-align: center;
 `;
-const PatientDetailsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #f7f7f7;
-  padding: 20px;
-  width: 300px; /* Set a fixed width for the container */
-  height: auto;
-  margin: 0;
-  position: absolute;
-  top: 3;
-  left: 0;
-  bottom: 3;
-  margin-bottom: 100px; /* Adjust margin bottom as needed */
-`;
+
+// const PatientDetailsContainer = styled.div`
+//   display: flex;
+//   flex-direction: column;
+//   align-items: center;
+//   background-color: #f7f7f7;
+//   padding: 20px;
+//   height: auto;
+//   margin: 0;
+//   position: absolute;
+// `;
 
 const ProfileImage = styled.img`
   width: 100px;
@@ -55,14 +54,6 @@ const PatientText = styled.p`
   width: 100%;
 `;
 
-// Scrollable right content
-const RightContent = styled.div`
-  margin-left: 320px; /* Make space for the fixed left container */
-  padding: 20px;
-  overflow-y: auto; /* Allow vertical scrolling */
-  height: 100vh; /* Full height of viewport */
-`;
-
 const CenteredFormGroup = styled(Form.Group)`
   display: flex;
   flex-direction: column;
@@ -83,33 +74,31 @@ const SummaryItem = styled.p`
   text-align: center;
 `;
 
-const ContainerRow = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-`;
-
 const DiagnosisContainer = styled.div`
-  flex: 1;
-  margin-right: 10px;
+  margin-top: 20px;
   padding: 20px;
   background-color: #f1f1f1;
   border-radius: 10px;
+  width: 30%;
+  height: 30%;
 `;
 
 const ComplaintsContainer = styled.div`
-  flex: 1;
-  margin-right: 10px;
+  margin-top: 50px;
   padding: 20px;
   background-color: #f1f1f1;
   border-radius: 10px;
+  width: 30%;
+  height: 30%;
 `;
 
 const FindingsContainer = styled.div`
-  flex: 1;
+  margin-top: 50px;
   padding: 20px;
   background-color: #f1f1f1;
   border-radius: 10px;
+  width: 30%;
+  height: 30%;
 `;
 
 const PrescriptionContainer = styled.div`
@@ -135,14 +124,34 @@ const PlanContainer = styled.div`
   margin-left: auto;
   margin-right: auto;
 `;
-const ProcedureContainer = styled.div`
-  margin-top: 20px;
-  padding: 20px;
+// const ProcedureContainer = styled.div`
+//   margin-top: 20px;
+//   padding: 20px;
+//   background-color: #f1f1f1;
+//   border-radius: 10px;
+//   width: 70%;
+//   margin-left: auto;
+//   margin-right: auto;
+// `;
+
+const NextVisitonContainer = styled.div`
+  margin-bottom: -2%;
+  height:auto
   background-color: #f1f1f1;
   border-radius: 10px;
-  width: 70%;
+  width:auto;
   margin-left: auto;
   margin-right: auto;
+`;
+const DateDisplay = styled.div`
+  font-size: 16px;
+  color: #333;
+`;
+
+const CalendarIcon = styled(FaCalendarAlt)`
+  font-size: 24px;
+  cursor: pointer;
+  color: #007bff;
 `;
 const TestContainer = styled.div`
   margin-top: 20px;
@@ -164,6 +173,23 @@ const SummaryContainer = styled.div`
   margin-right: auto;
 `;
 
+const ImageContainer = styled.div`
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  height:auto;
+  width:auto;
+  background-color: #f1f1f1;
+  justify-content: flex-start;
+`;
+
+const UploadedImage = styled.img`
+  width: 100px;
+  height: 100px;
+  margin: 5px;
+`;
+
+
 const PrescriptionDetails = () => {
   const location = useLocation();
   const { appointment } = location.state || {};
@@ -174,6 +200,7 @@ const PrescriptionDetails = () => {
     { selectedPrescription: [], dosage: '', durationNumber: '', duration: '', m: false, a: false, e: false, n: false }
   ]);
   
+  
   const [procedureRows, setProcedureRows] = useState([
     { id: 1, value: '' }
   ]);
@@ -183,34 +210,71 @@ const PrescriptionDetails = () => {
     plan2: '',
     plan3: ''
   });
-  
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [selectedTests, setSelectedTests] = useState([]);
-  // const [medicineOptions, setMedicineOptions] = useState([]); // State to hold medicine_name options
-  const [selectedPrescription, setSelectedPrescription] = useState('');
-  const [qty, setQty] = useState('');
-  const [price, setPrice] = useState('');
-  const [gst, setGst] = useState('');
-  const [total, setTotal] = useState('');
+   const [selectedDate, setSelectedDate] = useState(null);
 
-      
-    const handleGenerateClick = () => {
-      // Handle generation logic here, if needed
-      console.log('Generate button clicked');
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+  };
+
+  const formatDate = (date) => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+      // Function to handle image upload
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const uploaded = files.map((file) => ({
+      src: URL.createObjectURL(file),
+      alt: file.name,
+    }));
+    setUploadedImages([...uploadedImages, ...uploaded]);
+  };
+
+    
+    const [medicineOptions, setMedicineOptions] = useState([]);
+
+    useEffect(() => {
+      // Fetch medicine_name options from API
+      axios.get('http://127.0.0.1:8000/pharmacy/data/')
+        .then(response => {
+          const medicineNames = response.data.map(medicine => ({
+            label: medicine.medicine_name
+          }));
+          setMedicineOptions(medicineNames);
+        })
+        .catch(error => {
+          console.error('Error fetching medicine names:', error);
+        });
+    }, []);
+  
+    const handlePrescriptionChange = (index, key, value) => {
+      const newInputs = [...prescriptionInputs];
+      newInputs[index][key] = value;
+      setPrescriptionInputs(newInputs);
     };
-
-  useEffect(() => {
-    // Fetch medicine_name options from API
-    axios.get('http://127.0.0.1:8000/pharmacy/data/')
-      .then(response => {
-        const medicineNames = response.data.map(medicine => ({
-          label: medicine.medicine_name
-        }));
-        setMedicineOptions(medicineNames);
-      })
-      .catch(error => {
-        console.error('Error fetching medicine names:', error);
-      });
-  }, []); // Empty dependency array ensures this effect runs once on component mount
+  
+    const handleCheckboxChange = (index, checkboxKey) => {
+      const newInputs = [...prescriptionInputs];
+      newInputs[index][checkboxKey] = !newInputs[index][checkboxKey];
+      setPrescriptionInputs(newInputs);
+    };
+  
+    const handlePrescriptionAddInput = () => {
+      setPrescriptionInputs([
+        ...prescriptionInputs,
+        { selectedPrescription: [], dosage: '', durationNumber: '', duration: '', m: false, a: false, e: false, n: false }
+      ]);
+    };
+  
+    const handlePrescriptionDeleteInput = (index) => {
+      const newInputs = [...prescriptionInputs];
+      newInputs.splice(index, 1);
+      setPrescriptionInputs(newInputs);
+    };
   
   const handleAddRow = () => {
     const newRow = { id: procedureRows.length + 1, value: '' };
@@ -245,37 +309,10 @@ const PrescriptionDetails = () => {
   };
 
  
-  const [medicineOptions, setMedicineOptions] = useState([]);
-  const [billInputs, setBillInputs] = useState([
-    { qty: '', price: '', gst: '', total: '' }
-  ]);
-
-  const handlePrescriptionChange = (index, key, value) => {
-    const newInputs = [...prescriptionInputs];
-    newInputs[index][key] = value;
-    setPrescriptionInputs(newInputs);
-
-    // Ensure billInputs array has the same length as prescriptionInputs
-    if (billInputs.length < prescriptionInputs.length) {
-      setBillInputs([...billInputs, { qty: '', price: '', gst: '', total: '' }]);
-    }
-  };
-
-  const handleQtyOrPriceChange = (index, key, value) => {
-    const newBillInputs = [...billInputs];
-    newBillInputs[index] = { ...newBillInputs[index], [key]: value };
-
-    // Calculate the total based on qty and price
-    const qty = parseFloat(newBillInputs[index].qty) || 0;
-    const price = parseFloat(newBillInputs[index].price) || 0;
-    newBillInputs[index].total = (qty * price).toFixed(2); // Fix to 2 decimal places
-
-    setBillInputs(newBillInputs);
-  };
   
   const handleSubmit = async () => {
     const summaryData = {
-        patient_name: appointment.patientName,  // Include patient name here
+        patient_name: appointment.patientName,
         diagnosis: diagnosisInputs.map(input => input.selectedDiagnosis?.map(d => d.label).join(', ') || 'None').join('\n'),
         complaints: complaintsInputs.map(input => input.selectedComplaints?.map(c => c.label).join(', ') || 'None').join('\n'),
         findings: findingsInputs.map(input => input.selectedFindings?.map(f => f.label).join(', ') || 'None').join('\n'),
@@ -286,6 +323,8 @@ const PrescriptionDetails = () => {
         plans: `Plan1: ${planDetails.plan1 || 'None'}\nPlan2: ${planDetails.plan2 || 'None'}\nPlan3: ${planDetails.plan3 || 'None'}`,
         tests: selectedTests.map(test => test.label).join(', ') || 'None',
         procedures: procedureRows.map(row => row.value).join('\n') || 'None',
+        uploadedImages: uploadedImages.map(img => ({ src: img.src, alt: img.alt })),
+        nextVisit: selectedDate ? selectedDate.toISOString() : null, // Convert to ISO format if needed by backend
     };
 
     try {
@@ -296,46 +335,58 @@ const PrescriptionDetails = () => {
     }
 };
 
+
   
-  const getSummaryDetails = () => {
-    const diagnosis = diagnosisInputs.map((input, index) =>
+
+  
+const getSummaryDetails = () => {
+  const diagnosis = diagnosisInputs.map((input, index) =>
       `${index + 1}. ${input.selectedDiagnosis?.map(d => d.label).join(', ') || 'None'}`
-    ).join('\n') || 'None';
-  
-    const complaints = complaintsInputs.map((input, index) =>
+  ).join('\n') || 'None';
+
+  const complaints = complaintsInputs.map((input, index) =>
       `${index + 1}. ${input.selectedComplaints?.map(c => c.label).join(', ') || 'None'}`
-    ).join('\n') || 'None';
-  
-    const findings = findingsInputs.map((input, index) =>
+  ).join('\n') || 'None';
+
+  const findings = findingsInputs.map((input, index) =>
       `${index + 1}. ${input.selectedFindings?.map(f => f.label).join(', ') || 'None'}`
-    ).join('\n') || 'None';
-  
-    const prescriptionSummary = prescriptionInputs.map((input, index) => {
+  ).join('\n') || 'None';
+
+  const prescriptionSummary = prescriptionInputs.map((input, index) => {
       const times = ['M', 'A', 'E', 'N'].map(time => input[time.toLowerCase()] ? time : '').filter(Boolean).join(' ');
       return `${index + 1}. ${input.selectedPrescription?.map(p => p.label).join(', ') || 'None'} - Dosage: ${input.dosage || 'N/A'} - ${times} - Duration: ${input.durationNumber || 'N/A'} ${input.duration || ''}`;
-    }).join('\n') || 'None';
-  
-    const plans = [
+  }).join('\n') || 'None';
+
+  const plans = [
       `Plan1: ${planDetails.plan1 || 'None'}`,
       `Plan2: ${planDetails.plan2 || 'None'}`,
       `Plan3: ${planDetails.plan3 || 'None'}`
-    ].join('\n');
-    const procedures = procedureRows.map((row, index) => `${index + 1}. ${row.value}`).join('\n') || 'None';
-    const tests = `Tests: ${selectedTests.map(test => test.label).join(', ') || 'None'}`;
-  
-    return (
+  ].join('\n');
+
+  const procedures = procedureRows.map((row, index) => `${index + 1}. ${row.value}`).join('\n') || 'None';
+  const tests = `Tests: ${selectedTests.map(test => test.label).join(', ') || 'None'}`;
+  const nextVisitDate = selectedDate ? selectedDate.toLocaleDateString() : 'None';
+
+  // Render images as <img> elements
+  const Images = uploadedImages.map((img, index) => (
+      <img key={index} src={img.src} alt={img.alt} style={{ maxWidth: '100%', height: 'auto', margin: '10px' }} />
+  ));
+
+  return (
       <SummaryDetailsContainer>
-        <SummaryItem><strong>Diagnosis:</strong><br /> {diagnosis}</SummaryItem>
-        <SummaryItem><strong>Complaints:</strong><br /> {complaints}</SummaryItem>
-        <SummaryItem><strong>Findings:</strong><br /> {findings}</SummaryItem>
-        <SummaryItem><strong>Prescription:</strong><br /> {prescriptionSummary}</SummaryItem>
-        <SummaryItem><strong>Plans:</strong><br /> {plans}</SummaryItem>
-        <SummaryItem><strong>Tests:</strong><br /> {tests}</SummaryItem>
-        <SummaryItem>Procedures:</SummaryItem>
-        <SummaryItem>{procedures}</SummaryItem>
+          <SummaryItem><strong>Diagnosis:</strong><br /> {diagnosis}</SummaryItem>
+          <SummaryItem><strong>Complaints:</strong><br /> {complaints}</SummaryItem>
+          <SummaryItem><strong>Findings:</strong><br /> {findings}</SummaryItem>
+          <SummaryItem><strong>Prescription:</strong><br /> {prescriptionSummary}</SummaryItem>
+          <SummaryItem><strong>Plans:</strong><br /> {plans}</SummaryItem>
+          <SummaryItem><strong>Tests:</strong><br /> {tests}</SummaryItem>
+          <SummaryItem>Procedures:<br /> {procedures}</SummaryItem>
+          <SummaryItem><strong>Images:</strong><br /> {Images.length > 0 ? Images : 'None'}</SummaryItem>
+          <SummaryItem><strong>Next Visit Date:</strong><br /> {nextVisitDate}</SummaryItem>
       </SummaryDetailsContainer>
-    );
-  };
+  );
+};
+
   
   
   if (!appointment) {
@@ -369,9 +420,7 @@ const PrescriptionDetails = () => {
           <Nav.Item>
             <Nav.Link eventKey="summary">Summary</Nav.Link>
           </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="Bill">Bill</Nav.Link>
-          </Nav.Item>
+         
         </Nav>
         <Tab.Content>
           <Tab.Pane eventKey="consulting-room">
@@ -404,8 +453,28 @@ const PrescriptionDetails = () => {
                   </Row>
                 ))}
               </DiagnosisContainer>
+              <br />
+            <ImageContainer>
+              <SectionTitle>Images</SectionTitle>
+              <br/>
+            <Form.Group controlId="formFileMultiple" className="mb-3">
+              <Form.Label> </Form.Label>
+              <div>
+                <input type="file" multiple onChange={handleImageUpload} />
+               
+              </div>
+            </Form.Group>
+            {uploadedImages.map((image, index) => (
+              <Row key={index}>
+                <Col>
+                  <UploadedImage src={image.src} alt={image.alt} />
+                </Col>
+              </Row>
+            ))}
+          </ImageContainer>
             </center>
             <br />
+
             <center>
               <ComplaintsContainer>
                 {complaintsInputs.map((input, index) => (
@@ -467,90 +536,87 @@ const PrescriptionDetails = () => {
             </center>
             <br />
             <center>
-            <PrescriptionContainer>
-                <SectionTitle>Prescription</SectionTitle>
-                {prescriptionInputs.map((input, index) => (
-                <Form.Group as={Row} className="mb-3" controlId={`prescription-${index}`} key={index}>
-                  <Col sm="3">
-                    <Typeahead
-                      labelKey="label"
-                      multiple
-                      options={medicineOptions} // Use medicineOptions fetched from backend
-                      placeholder="Choose prescription..."
-                      onChange={(selected) => handlePrescriptionChange(index, 'selectedPrescription', selected)}
-                      selected={input.selectedPrescription || []}
-                      />
-                    </Col>
-                    <Col sm="1">
-                      <Form.Control
-                        type="text"
-                        placeholder="Dosage"
-                        value={input.dosage || ''}
-                        onChange={(e) => handlePrescriptionChange(index, 'dosage', e.target.value)}
-                      />
-                    </Col>
-                    {prescriptionInputs.map((input, index) => (
-                      <Col sm="4" key={index}>
-                        <Form.Check
-                          inline
-                          label="M"
-                          type="checkbox"
-                          checked={input.m}
-                          onChange={(e) => handlePrescriptionChange(index, 'm', e.target.checked)}
-                        />
-                        <Form.Check
-                          inline
-                          label="A"
-                          type="checkbox"
-                          checked={input.a}
-                          onChange={(e) => handlePrescriptionChange(index, 'a', e.target.checked)}
-                        />
-                        <Form.Check
-                          inline
-                          label="E"
-                          type="checkbox"
-                          checked={input.e}
-                          onChange={(e) => handlePrescriptionChange(index, 'e', e.target.checked)}
-                        />
-                        <Form.Check
-                          inline
-                          label="N"
-                          type="checkbox"
-                          checked={input.n}
-                          onChange={(e) => handlePrescriptionChange(index, 'n', e.target.checked)}
-                        />
-                      </Col>
-                    ))}
-
-                    <Col sm="1">
-                      <Form.Control
-                        type="text"
-                        placeholder="Number"
-                        value={input.durationNumber || ''}
-                        onChange={(e) => handlePrescriptionChange(index, 'durationNumber', e.target.value)}
-                      />
-                    </Col>
-                    <Col sm="1">
-                      <Form.Control
-                        as="select"
-                        value={input.duration || ''}
-                        onChange={(e) => handlePrescriptionChange(index, 'duration', e.target.value)}
-                      >
-                        <option value="">Duration</option>
-                        <option value="Days">Days</option>
-                        <option value="Weeks">Weeks</option>
-                        <option value="Months">Months</option>
-                        <option value="Years">Years</option>
-                        <option value="To Be Continued">To Be Continued</option>
-                      </Form.Control>
-                    </Col>
-                    <Col sm="2" className="d-flex align-items-center">
-                      <BsPatchPlusFill onClick={() => handleAddInput(setPrescriptionInputs)} style={{ cursor: 'pointer', marginRight: '10px' }} />
-                      <MdDelete onClick={() => handleDeleteInput(index, setPrescriptionInputs, prescriptionInputs)} style={{ cursor: 'pointer' }} />
-                    </Col>
-                  </Form.Group>
-                ))}
-              </PrescriptionContainer>
+     <PrescriptionContainer>
+    <SectionTitle>Prescription</SectionTitle>
+    {prescriptionInputs.map((input, index) => (
+        <Form.Group as={Row} className="mb-3" controlId={`prescription-${index}`} key={index}>
+          <Col sm="3">
+            <Typeahead
+              labelKey="label"
+              multiple
+              options={medicineOptions}
+              placeholder="Choose prescription..."
+              onChange={(selected) => handlePrescriptionChange(index, 'selectedPrescription', selected)}
+              selected={input.selectedPrescription || []}
+            />
+          </Col>
+          <Col sm="1">
+            <Form.Control
+              type="text"
+              placeholder="Dosage"
+              value={input.dosage || ''}
+              onChange={(e) => handlePrescriptionChange(index, 'dosage', e.target.value)}
+            />
+          </Col>
+          <Col sm="4">
+            <Form.Check
+              inline
+              label="M"
+              type="checkbox"
+              checked={input.m}
+              onChange={() => handleCheckboxChange(index, 'm')}
+            />
+            <Form.Check
+              inline
+              label="A"
+              type="checkbox"
+              checked={input.a}
+              onChange={() => handleCheckboxChange(index, 'a')}
+            />
+            <Form.Check
+              inline
+              label="E"
+              type="checkbox"
+              checked={input.e}
+              onChange={() => handleCheckboxChange(index, 'e')}
+            />
+            <Form.Check
+              inline
+              label="N"
+              type="checkbox"
+              checked={input.n}
+              onChange={() => handleCheckboxChange(index, 'n')}
+            />
+          </Col>
+          <Col sm="1">
+            <Form.Control
+              type="text"
+              placeholder="Number"
+              value={input.durationNumber || ''}
+              onChange={(e) => handlePrescriptionChange(index, 'durationNumber', e.target.value)}
+            />
+          </Col>
+          <Col sm="1">
+            <Form.Control
+              as="select"
+              value={input.duration || ''}
+              onChange={(e) => handlePrescriptionChange(index, 'duration', e.target.value)}
+            >
+              <option value="">Duration</option>
+              <option value="Days">Days</option>
+              <option value="Weeks">Weeks</option>
+              <option value="Months">Months</option>
+              <option value="Years">Years</option>
+              <option value="To Be Continued">To Be Continued</option>
+            </Form.Control>
+          </Col>
+          <Col sm="2">
+            <BsPatchPlusFill onClick={handlePrescriptionAddInput} style={{ cursor: 'pointer', marginLeft: '10px' }} />
+            <MdDelete onClick={() => handlePrescriptionDeleteInput(index)} style={{ cursor: 'pointer', marginLeft: '10px' }} />
+          </Col>
+        </Form.Group>
+      ))}
+  </PrescriptionContainer>
             </center>
             <br />
           </Tab.Pane>
@@ -614,7 +680,7 @@ const PrescriptionDetails = () => {
               </TestContainer>
             </center>
             <SectionTitle>Procedure</SectionTitle>
-            <ProcedureContainer>
+            {/* <ProcedureContainer>
               {procedureRows.map(row => (
                 <Row key={row.id} className="mb-3">
                   <Col>
@@ -628,7 +694,24 @@ const PrescriptionDetails = () => {
                 </Row>
               ))}
               <button onClick={handleAddRow}>Add Procedure</button>
-            </ProcedureContainer>
+            </ProcedureContainer> */}
+        <center>
+      <NextVisitonContainer>
+        <SectionTitle>Next Visit</SectionTitle>
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleDateChange}
+          customInput={<CalendarIcon />}
+          popperPlacement="bottom-end"
+          dateFormat="dd/MM/yyyy"
+        />
+      
+        <DateDisplay>
+          <br/>
+          {selectedDate ? `Next Visit on: ${formatDate(selectedDate)}` : 'Next Visit on: Select a date'}
+        </DateDisplay>
+      </NextVisitonContainer>
+    </center>
           </Tab.Pane>
 
           <Tab.Pane eventKey="summary">
@@ -640,79 +723,9 @@ const PrescriptionDetails = () => {
                   Save 
            </button>
                 </center>
-            </SummaryContainer>
-          
+            </SummaryContainer>   
           </Tab.Pane>
-
-          <Tab.Pane eventKey="Bill">
-            <br />
-            <center>
-            <div>
-                <br />
-                <div className="table-responsive">
-                <table className="table">
-            <thead>
-              <tr>
-                <th>Particulars</th>
-                <th >Qty </th>
-                <th>Price</th>
-                <th>GST(%)</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-            {prescriptionInputs.map((input, index) => (
-              input.selectedPrescription.map((prescription, i) => (
-                <tr key={`${index}-${i}`}>
-                  <td>{prescription.label}</td>
-                  <td>
-                    <input
-        
-                      className="form-control form-control-sm"
-                      value={billInputs[index]?.qty || ''}
-                      onChange={(e) => handleQtyOrPriceChange(index, 'qty', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      value={billInputs[index]?.price || ''}
-                      onChange={(e) => handleQtyOrPriceChange(index, 'price', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      value={billInputs[index]?.gst || ''}
-                      onChange={(e) => handleQtyOrPriceChange(index, 'gst', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      value={billInputs[index]?.total || ''}
-                      readOnly // Make the total textbox non-editable
-                    />
-                  </td>
-                </tr>
-              ))
-            ))}
-          </tbody>
-        </table>
-              </div>
-              <br />
-              <center>
-                <button onClick={handleGenerateClick}>
-                  Generate
-                </button>
-              </center>
-            </div>
-          <br />
-          </center>
-        </Tab.Pane>
+         
 
         </Tab.Content>
       </Tab.Container>
@@ -721,4 +734,3 @@ const PrescriptionDetails = () => {
 };
 
 export default PrescriptionDetails;
-

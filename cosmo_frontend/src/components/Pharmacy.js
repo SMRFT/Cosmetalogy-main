@@ -7,34 +7,15 @@ import { FaRegBell } from "react-icons/fa";
 import styled from 'styled-components';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import Notification from './Notification';
 
 const Pharmacy = () => {
-  const [lowQuantityMedicines, setLowQuantityMedicines] = useState([]);
-  const [nearExpiryMedicines, setNearExpiryMedicines] = useState([]);
-  const [panelVisible, setPanelVisible] = useState(false);
-
-  useEffect(() => {
-    axios.get('http://127.0.0.1:8000/check_medicine_status/')
-      .then(response => {
-        setLowQuantityMedicines(response.data.low_quantity_medicines);
-        setNearExpiryMedicines(response.data.near_expiry_medicines);
-      })
-      .catch(error => {
-        console.error('There was an error fetching the medicine status:', error);
-      });
-  }, []);
-
-  const togglePanel = () => {
-    setPanelVisible(!panelVisible);
-  };
-
-  const hasNotifications = lowQuantityMedicines.length > 0 || nearExpiryMedicines.length > 0;
-
   const [formData, setFormData] = useState([
     {
       medicineName: '',
       companyName: '',
       price: '',
+      GST:'',
       newStock: '',
       oldStock: '',
       receivedDate: '',
@@ -56,6 +37,7 @@ const Pharmacy = () => {
               medicineName: '',
               companyName:'',
               price: '',
+              GST:'',
               newStock: '',
               oldStock: '',
               receivedDate: '',
@@ -69,6 +51,7 @@ const Pharmacy = () => {
               medicineName: item.medicine_name,
               companyName: item.company_name,
               price: item.price.toString(),
+              GST: item.gst,
               newStock: '',
               oldStock: item.old_stock.toString(),
               receivedDate: item.received_date,
@@ -111,6 +94,7 @@ const Pharmacy = () => {
       medicine_name: item.medicineName,
       company_name: item.companyName,
       price: item.price,
+      gst: item.GST,
       new_stock: item.newStock ? parseInt(item.newStock, 10) : 0,
       received_date: formatDate(item.receivedDate),
       expiry_date: formatDate(item.expiryDate),
@@ -149,6 +133,7 @@ const Pharmacy = () => {
         medicineName: '',
         companyName: '',
         price: '',
+        GST:'',
         newStock: '',
         oldStock: '',
         receivedDate: '',
@@ -183,42 +168,7 @@ const Pharmacy = () => {
 
   return (
     <div>
-      <NotificationIcon onClick={togglePanel}>
-        <FaRegBell />
-        {hasNotifications && <RedDot />}
-      </NotificationIcon>
-
-      <NotificationPanel visible={panelVisible}>
-        <CloseIcon onClick={togglePanel}><IoMdClose /></CloseIcon>
-        <h4 className="mb-3">Notifications</h4>
-
-        {lowQuantityMedicines.length > 0 && (
-          <Alert style={{backgroundColor:"#F1F1F1",border:"#C7B7A3"}} className="mb-3">
-            <center><Alert.Heading style={{color:"#B3A398",fontSize:"1.2rem",fontFamily:"cursive"}}>Low Stock Medicines</Alert.Heading></center>
-            <ul style={{fontSize:"0.9rem",fontFamily:"initial",color:"#C7B7A3"}}>
-              {lowQuantityMedicines.map((medicine, index) => (
-                <li key={index}>
-                  {medicine.medicine_name} - Stock: {medicine.old_stock} - Expiry Date: {medicine.expiry_date}
-                </li>
-              ))}
-            </ul>
-          </Alert>
-        )}
-
-        {nearExpiryMedicines.length > 0 && (
-          <Alert style={{backgroundColor:"#F1F1F1",border:"#C7B7A3"}}>
-            <center><Alert.Heading style={{color:"#B3A398",fontSize:"1.2rem",fontFamily:"cursive"}}>Near Expiry Medicines</Alert.Heading></center>
-            <ul style={{fontSize:"0.9rem",fontFamily:"initial",color:"#C7B7A3"}}>
-              {nearExpiryMedicines.map((medicine, index) => (
-                <li key={index}>
-                  {medicine.medicine_name} - Stock: {medicine.old_stock} - Expiry Date: {medicine.expiry_date}
-                </li>
-              ))}
-            </ul>
-          </Alert>
-        )}
-      </NotificationPanel>
-
+      <Notification/>
       <StyledContainer>
         <h3 className="text-center mb-4">Pharmacy Stock</h3>
         {submitSuccess && (
@@ -236,6 +186,7 @@ const Pharmacy = () => {
                   <th>Medicine Name</th>
                   <th>Company Name</th>
                   <th>Price</th>
+                  <th>GST</th>
                   <th>New Stock</th>
                   <th>Old Stock</th>
                   <th>Received Date</th>
@@ -273,6 +224,16 @@ const Pharmacy = () => {
                         placeholder="Enter price"
                         name="price"
                         value={data.price}
+                        onChange={(e) => handleChange(index, e)}
+                        onKeyPress={(e) => handleKeyPress(index, e)}
+                      />
+                    </td>
+                    <td>
+                      <StyledFormControl
+                        type="text"
+                        placeholder="Enter GST"
+                        name="gst"
+                        value={data.GST}
                         onChange={(e) => handleChange(index, e)}
                         onKeyPress={(e) => handleKeyPress(index, e)}
                       />
@@ -348,11 +309,11 @@ const Pharmacy = () => {
 };
 
 const StyledContainer = styled(Container)`
-  margin-top: -50px;
 `;
 
 const TableContainer = styled.div`
-  max-height: 420px;
+  max-height: 450px;
+  width: fit-content;
   overflow-y: auto;
   scrollbar-width: thin;
 `;
@@ -369,7 +330,7 @@ const StyledTable = styled(Table)`
 `;
 
 const StyledFormControl = styled(Form.Control)`
-  min-width: 120px;
+  min-width: 100px;
 `;
 
 const SuccessMessage = styled(Alert).attrs({
@@ -388,78 +349,11 @@ const ErrorMessage = styled(Alert).attrs({
   font-weight: bold;
 `;
 
-const NotificationIcon = styled.div`
-  position: fixed;
-  top: 20px;
-  right: 60px;
-  font-size: 1rem;
-  cursor: pointer;
-  z-index: 1100;
-
-  svg {
-    font-size: 2rem;
-    color: grey;
-  }
-
-  &:hover {
-    svg {
-      color: black;
-    }
-  }
-`;
-
-const RedDot = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background-color: red;
-  border-radius: 50%;
-  border: 2px solid white;
-`;
-
-const NotificationPanel = styled.div`
-  position: fixed;
-  right: 0;
-  width: 400px;
-  height: 90%;
-  background-color: white;
-  box-shadow: -1px 0px 7px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
-  transform: translateX(${props => (props.visible ? '0' : '100%')});
-  z-index: 1000;
-  padding: 20px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  border-radius: 10px;
-`;
-
-const CloseIcon = styled.div`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  cursor: pointer;
-
-  svg {
-    font-size: 1.5rem;
-    color: black;
-  }
-
-  &:hover {
-    svg {
-      color: gray;
-    }
-  }
-`;
-
-
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
 `;
-
 
 const RemoveIcon = styled.div`
   color: red;
