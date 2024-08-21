@@ -19,11 +19,12 @@
   }
   
   .login-container {
-    background-image: url('./images/background-login-image.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: 1;
-    color: rgb(92, 116, 112);
+    color: #472563;
     font-weight: bold;
+    z-index: 2; /* Ensure it stays above the images */
+    backdrop-filter: blur(10px); /* Adds a subtle blur effect to enhance the crystal-like appearance */
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color:rgb(237,237,237,.1);
+    font-size: 1.2rem;
   }

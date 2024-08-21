@@ -2,15 +2,19 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 
-function VitalForm({ patientName, mobileNumber }) {
+function VitalForm({ patientUID, patientName, mobileNumber }) {
     const [formData, setFormData] = useState({
         height: '',
         weight: '',
         pulseRate: '',
         bloodPressure: '',
+        patientUID: patientUID,
         patientName: patientName,
         mobileNumber: mobileNumber
     });
+
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -24,72 +28,83 @@ function VitalForm({ patientName, mobileNumber }) {
         e.preventDefault();
         console.log('Form Data Submitted: ', formData);
         try {
-            const vitalResponse = await axios.post('http://127.0.0.1:8000/vitalform/', {
-                height: formData.height,
-                weight: formData.weight,
-                pulseRate: formData.pulseRate,
-                bloodPressure: formData.bloodPressure,
-                patient: formData.mobileNumber // Link the vital record to the patient using mobileNumber
-            });
-
+            const vitalResponse = await axios.post('http://127.0.0.1:8000/vitalform/', formData);
             console.log('Vital Data:', vitalResponse.data);
+            setSuccessMessage(`Vital data for ${patientName} submitted successfully!`);
+            setErrorMessage('');
+            setFormData({
+                height: '',
+                weight: '',
+                pulseRate: '',
+                bloodPressure: '',
+                patientUID: patientUID,
+                patientName: patientName,
+                mobileNumber: mobileNumber
+            });
         } catch (error) {
-            console.error('Error submitting form data:', error);
+            setErrorMessage('Error submitting form data. Please try again.');
+            setSuccessMessage('');
         }
     };
 
     return (
         <FormContainer>
             <Form onSubmit={handleSubmit}>
-                <FormGroup>
-                    <Label htmlFor="height">Height (cm)</Label>
-                    <Input
-                        type="text"
-                        id="height"
-                        name="height"
-                        value={formData.height}
-                        onChange={handleChange}
-                        required
-                    />
-                </FormGroup>
-                <FormGroup>
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                        type="text"
-                        id="weight"
-                        name="weight"
-                        value={formData.weight}
-                        onChange={handleChange}
-                        required
-                    />
-                </FormGroup>
-                <FormGroup>
-                    <Label htmlFor="pulseRate">Pulse Rate (bpm)</Label>
-                    <Input
-                        type="text"
-                        id="pulseRate"
-                        name="pulseRate"
-                        value={formData.pulseRate}
-                        onChange={handleChange}
-                        required
-                    />
-                </FormGroup>
-                <FormGroup>
-                    <Label htmlFor="bloodPressure">Blood Pressure (mmHg)</Label>
-                    <Input
-                        type="text"
-                        id="bloodPressure"
-                        name="bloodPressure"
-                        value={formData.bloodPressure}
-                        onChange={handleChange}
-                        placeholder="e.g., 120/80"
-                        required
-                    />
-                </FormGroup>
+                {successMessage && <SuccessMessage>{successMessage}</SuccessMessage>}
+                {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
+                <FormRow>
+                    <FormGroup>
+                        <Label htmlFor="height">Height (cm)</Label>
+                        <Input
+                            type="text"
+                            id="height"
+                            name="height"
+                            value={formData.height}
+                            onChange={handleChange}
+                            required
+                        />
+                    </FormGroup>
+                    <FormGroup>
+                        <Label htmlFor="weight">Weight (kg)</Label>
+                        <Input
+                            type="text"
+                            id="weight"
+                            name="weight"
+                            value={formData.weight}
+                            onChange={handleChange}
+                            required
+                        />
+                    </FormGroup>
+                </FormRow>
+                <FormRow>
+                    <FormGroup>
+                        <Label htmlFor="pulseRate">Pulse Rate (bpm)</Label>
+                        <Input
+                            type="text"
+                            id="pulseRate"
+                            name="pulseRate"
+                            value={formData.pulseRate}
+                            onChange={handleChange}
+                            required
+                        />
+                    </FormGroup>
+                    <FormGroup>
+                        <Label htmlFor="bloodPressure">Blood Pressure (mmHg)</Label>
+                        <Input
+                            type="text"
+                            id="bloodPressure"
+                            name="bloodPressure"
+                            value={formData.bloodPressure}
+                            onChange={handleChange}
+                            placeholder="e.g., 120/80"
+                            required
+                        />
+                    </FormGroup>
+                </FormRow>
+                <ButtonContainer>
+                    <button type="submit">Submit</button>
+                </ButtonContainer>
             </Form>
-            <button type="submit">
-                Submit
-            </button>
         </FormContainer>
     );
 }
@@ -99,7 +114,10 @@ const FormContainer = styled.div`
     flex-direction: column;
     align-items: center;
     padding: 20px;
-    background-color: #F7F7F7;
+    background-image: url${'/images/background-vital.jpg'};
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 100%;
@@ -113,8 +131,31 @@ const Form = styled.form`
     width: 100%;
 `;
 
-const FormGroup = styled.div`
+const FormRow = styled.div`
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
     margin-bottom: 15px;
+
+    & > div {
+        flex: 1;
+        margin-right: 10px;
+    }
+
+    & > div:last-child {
+        margin-right: 0;
+    }
+`;
+
+const FormGroup = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+
+const ButtonContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    width: 100%;
 `;
 
 const Label = styled.label`
@@ -130,6 +171,20 @@ const Input = styled.input`
     border-radius: 5px;
     font-size: 14px;
     box-sizing: border-box;
+`;
+
+const SuccessMessage = styled.p`
+    color: green;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+`;
+
+const ErrorMessage = styled.p`
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
 `;
 
 export default VitalForm;

@@ -1,6 +1,5 @@
 # forms.py
 from rest_framework import serializers
-
 from .models import Register
 from bson import ObjectId
 class ObjectIdField(serializers.Field):
@@ -8,6 +7,7 @@ class ObjectIdField(serializers.Field):
         return str(value)
     def to_internal_value(self, data):
         return ObjectId(data)
+    
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Register
@@ -32,6 +32,11 @@ class PharmacySerializer(serializers.ModelSerializer):
     class Meta:
         model = Pharmacy
         fields = '__all__'
+
+class PharmacyStockUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pharmacy
+        fields = ['medicine_name', 'old_stock']  # Include only necessary fields
 
 
 from .models import Patient
@@ -67,6 +72,54 @@ class VisitSerializer(serializers.ModelSerializer):
 
 from .models import Vital
 class VitalSerializer(serializers.ModelSerializer):
+    id = ObjectIdField(read_only=True)
     class Meta:
         model = Vital
+        fields = '__all__'
+
+
+from .models import BillingData
+class BillingDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BillingData
+        fields = ['patientName', 'appointmentDate', 'table_data','patientUID']
+
+
+from .models import Diagnosis,Complaints,Findings,Tests,Procedure
+class DiagnosisSerializer(serializers.ModelSerializer):
+     id = ObjectIdField(read_only=True)
+     class Meta:
+        model = Diagnosis
+        fields = '__all__'
+
+class ComplaintsSerializer(serializers.ModelSerializer):
+     id = ObjectIdField(read_only=True)
+     class Meta:
+        model = Complaints
+        fields = '__all__'
+
+class FindingsSerializer(serializers.ModelSerializer):
+     id = ObjectIdField(read_only=True)
+     class Meta:
+        model = Findings
+        fields = '__all__'
+
+class TestsSerializer(serializers.ModelSerializer):
+     id = ObjectIdField(read_only=True)
+     class Meta:
+        model = Tests
+        fields = '__all__'
+
+class ProcedureSerializer(serializers.ModelSerializer):
+     id = ObjectIdField(read_only=True)
+     class Meta:
+        model = Procedure
+        fields = '__all__'
+
+
+from .models import ProcedureBill
+class ProcedureBillSerializer(serializers.ModelSerializer):
+     id = ObjectIdField(read_only=True)
+     class Meta:
+        model = ProcedureBill
         fields = '__all__'

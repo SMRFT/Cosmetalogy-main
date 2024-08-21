@@ -91,11 +91,10 @@ DATABASES = {
         'NAME': 'cosmetology',
         'ENFORCE_SCHEMA': False,
         'CLIENT': {
-            'host': 'mongodb+srv://smrftcosmo:smrft%402024@cluster0.lctyiq9.mongodb.net/your_database_name?retryWrites=true&w=majority',
+            'host': 'mongodb+srv://smrftcosmo:smrft%402024@cluster0.lctyiq9.mongodb.net/?retryWrites=true&w=majority',
         }  
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

@@ -81,7 +81,7 @@ const Appointment = ({}) => {
 
     const handleSelectPatient = (patient) => {
         const appointmentData = {
-            patientId: patient.patientId,
+            patientUID: patient.patientUID,
             patientName: patient.patientName,
             mobileNumber: patient.mobileNumber,
             appointmentTime: selectedSlot,
@@ -126,13 +126,13 @@ const Appointment = ({}) => {
     };
 
     return (
-        <div>
-        <StyledContainer className='mt-4'>
-            <h3 className="text-center mb-4">Appointment</h3>
+        <StyledContainer>
+        <h3 className="text-center mb-4" >Appointment</h3>
+        <AppointmentContainer>
             <ListGroupContainer>
                 <div className="text-center mb-4">
                     <DateDisplay onClick={() => setShowDatePicker(!showDatePicker)}>
-                        <FontAwesomeIcon icon={faCalendarAlt} style={{ marginRight: '8px', color: "#EAB2A0" }} />
+                        <FontAwesomeIcon icon={faCalendarAlt} style={{ marginRight: '8px', color: "#C85C8E" }} />
                         {selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </DateDisplay>
                     {showDatePicker && (
@@ -173,15 +173,17 @@ const Appointment = ({}) => {
                     <PatientList onSelectPatient={handleSelectPatient} />
                 </Modal.Body>
             </Modal>
+            </AppointmentContainer>
         </StyledContainer>
-        </div>
     );
 };
 const StyledContainer = styled(Container)`
+    margin-top: 65px;
+`;
+const AppointmentContainer = styled(Container)`
     padding: 20px;
     max-width: 700px;
-    margin: 0 auto;
-    background-color: #F9F9F9;
+    background-color: #725F83;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
@@ -191,14 +193,14 @@ const ListGroupContainer = styled(Container)`
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    width: 500px;
+    width: 400px;
 `;
 
 const ListContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     width: 100%;
     margin: 0 auto;
@@ -222,7 +224,7 @@ const DateDisplay = styled.div`
     margin: 0 auto;
     cursor: pointer;
     position: relative;
-    color: #EAB2A0;
+    color: #C85C8E;
     font-weight: bold;
 `;
 
@@ -237,26 +239,26 @@ const DatePickerWrapper = styled.div`
 const SlotButton = styled(Button)`
     padding: 0.5rem 1rem;
     font-size: 16px;
-    border: 1px solid #EAB2A0;
+    border: 1px solid #BCAEC7;
     background-color: #fff;
-    color: #EAB2A0;
+    color: #BCAEC7;
     border-radius: 20px;
     transition: all 0.3s;
     ${(props) => props.isSelected && `
-        background-color: #EAB2A0;
+        background-color: #BCAEC7;
         color: #fff;
     `}
     ${(props) => props.disabled && `
-        background-color: #EAB2A0 !important;
+        background-color: #BCAEC7 !important;
         color: #fff;
         border: none;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         cursor: not-allowed;
     `}
     &:hover {
-        background-color: #EAB2A0;
+        background-color: #BCAEC7;
         color: #fff;
-        border: 1px solid #EAB2A0;
+        border: 1px solid #BCAEC7;
     }
 `;
 

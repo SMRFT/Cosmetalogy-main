@@ -82,7 +82,7 @@ const Register = () => {
                                     pattern="[a-zA-Z0-9]+"
                                     autoComplete="off"
                                     isInvalid={(touchedFields.id && !formData.id) || (formData.id && !/^[a-zA-Z0-9]+$/.test(formData.id))}
-                                    style={{ border: "1px solid #b5e0e6" }}
+                                    style={{ border: "1px solid #DAD1E1" }}
                                 />
                                 <Form.Control.Feedback type="invalid">
                                     {formData.id && !/^[a-zA-Z0-9]+$/.test(formData.id) ? "Please enter a valid ID." : "ID is required."}
@@ -99,7 +99,7 @@ const Register = () => {
                                     onChange={handleChange}
                                     pattern="[A-Za-z\s]+"
                                     isInvalid={(touchedFields.name && !formData.name) || (formData.name && !/^[A-Za-z\s]+$/.test(formData.name))}
-                                    style={{ border: "1px solid #b5e0e6" }}
+                                    style={{ border: "1px solid #DAD1E1" }}
                                 />
                                 <Form.Control.Feedback type="invalid">
                                     {formData.name && !/^[A-Za-z\s]+$/.test(formData.name) ? "Please enter a valid name." : "Name is required."}
@@ -110,7 +110,7 @@ const Register = () => {
                         <Form.Group controlId="role">
                             <Form.Label>Role</Form.Label>
                             <Dropdown id="roleselect" onSelect={(value) => setFormData({ ...formData, role: value })} className="custom-dropdown">
-                                <Dropdown.Toggle variant="light" id="dropdown-basic" style={{ minWidth: "120px", backgroundColor: "white", color: "black", border: "1px solid #b5e0e6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <Dropdown.Toggle variant="light" id="dropdown-basic" style={{ minWidth: "120px", backgroundColor: "white", color: "black", border: "1px solid #DAD1E1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                     <span>{formData.role || 'Select Role'}</span>
                                     <span className="caret"></span> {/* Bootstrap's built-in caret icon */}
                                 </Dropdown.Toggle>
@@ -139,7 +139,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 isInvalid={(touchedFields.email && !formData.email) || (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))}
                                 autoComplete="off"
-                                style={{ border: "1px solid #b5e0e6" }}
+                                style={{ border: "1px solid #DAD1E1" }}
                             />
                             <Form.Control.Feedback type="invalid">
                                 {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ? "Please enter a valid email address." : "Email is required."}
@@ -157,7 +157,7 @@ const Register = () => {
                                     value={formData.password}
                                     onChange={handleChange}
                                     autoComplete="new-password"
-                                    style={{ border: "1px solid #b5e0e6" }}
+                                    style={{ border: "1px solid #DAD1E1" }}
                                 />
                                 <Form.Control.Feedback type="invalid">
                                     Password is required.
@@ -172,7 +172,7 @@ const Register = () => {
                                     type="password"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
-                                    style={{ border: "1px solid #b5e0e6" }}
+                                    style={{ border: "1px solid #DAD1E1" }}
                                     isInvalid={touchedFields.confirmPassword && formData.password !== formData.confirmPassword}
                                 />
                                 <Form.Control.Feedback type="invalid">
@@ -187,7 +187,7 @@ const Register = () => {
                         </button>
                     </center>
                     <Alert variant="success" show={formSubmitted}>
-                        Form submitted successfully.
+                       Registered New User Successfully.
                     </Alert>
                     {error && <Alert variant="danger">{error}</Alert>}
                     {passwordError && <Alert variant="danger">{passwordError}</Alert>}

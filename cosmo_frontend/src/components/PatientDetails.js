@@ -3,6 +3,7 @@ import axios from 'axios';
 import { IoPersonCircleSharp, IoAdd, IoSearch } from 'react-icons/io5';
 import { Modal, Button } from 'react-bootstrap';
 import PatientForm from './PatientForm';  // Ensure the path is correct
+import styled from 'styled-components';
 import './PatientList.css';
 
 const PatientDetails = ({ onSelectPatient }) => {
@@ -55,10 +56,10 @@ const PatientDetails = ({ onSelectPatient }) => {
     };
 
     return (
-        <div className="patient mt-4">
-            <h3 className='text-center mb-2'>Patient Details</h3>
+        <StyledContainer className="patient">
+            <h3 className="text-center mb-2">Patient Details</h3>
             <header className="header1">
-                <div className="search-bar" style={{width:"30%"}}>
+                <div className="search-bar" style={{ width: "30%" }}>
                     <IoSearch className="search-icon" />
                     <input
                         type="text"
@@ -73,7 +74,7 @@ const PatientDetails = ({ onSelectPatient }) => {
                 {filteredPatients.map(patient => (
                     <li key={patient.id} className="patient-item" onClick={() => handlePatientClick(patient)}>
                         <div className="patient-info">
-                            <IoPersonCircleSharp className='person'/>
+                            <IoPersonCircleSharp className='person' />
                             <div>
                                 <div className="patient-name">{patient.patientName}</div>
                                 <div className="patient-mobile">{patient.mobileNumber}</div>
@@ -96,7 +97,7 @@ const PatientDetails = ({ onSelectPatient }) => {
                         <Modal.Title>Patient Details</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <p><strong>Patient Id:</strong> {selectedPatient.patientId}</p>
+                        <p><strong>Patient Id:</strong> {selectedPatient.patientUID}</p>
                         <p><strong>Patient Name:</strong> {selectedPatient.patientName}</p>
                         <p><strong>Mobile Number:</strong> {selectedPatient.mobileNumber}</p>
                         <p><strong>Date Of Birth:</strong> {selectedPatient.dateOfBirth}</p>
@@ -109,8 +110,12 @@ const PatientDetails = ({ onSelectPatient }) => {
                     </Modal.Body>
                 </Modal>
             )}
-        </div>
+        </StyledContainer>
     );
 };
+
+const StyledContainer = styled.div`
+    margin-top: 65px;
+`;
 
 export default PatientDetails;

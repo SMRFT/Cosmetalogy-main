@@ -1,70 +1,51 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState,useEffect,useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Col, Row, Form, Tab, Nav } from 'react-bootstrap';
+import { Col, Row, Form, Tab, Nav, Modal} from 'react-bootstrap';
 import styled from 'styled-components';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
-import { diagnosisList, patientComplaints, findingsList, prescription, test } from './constant';
-import male from './images/male.png';
+import male from './images/male.png';        
 import female from './images/female.png';
-import { BsPatchPlusFill } from "react-icons/bs";
+import { BsPatchPlusFill} from "react-icons/bs";
+import { BiImageAdd } from "react-icons/bi";
 import { MdDelete } from "react-icons/md";
 import axios from 'axios';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 import { FaCalendarAlt } from 'react-icons/fa';
+import DatePicker from 'react-datepicker';
+import MedicalHistory from './MedicalHistory';
+import { useNavigate } from 'react-router-dom';
+import Diagnosis from './Diagnosis';
+import Complaints from './Complaints';
+import Findings from './Findings';
+import Tests from './Tests';
+import Procedures from './Procedure';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import 'jspdf-autotable';
+import PDFHeader from './images/PDF_Header.png';
+import PDFFooter from './images/PDF_Footer.png';
+import 'jspdf-autotable';
 
-const SectionTitle = styled.h4`
-  margin-top: 20px;
-  text-align: center;
-`;
 
-// const PatientDetailsContainer = styled.div`
-//   display: flex;
-//   flex-direction: column;
-//   align-items: center;
-//   background-color: #f7f7f7;
-//   padding: 20px;
-//   height: auto;
-//   margin: 0;
-//   position: absolute;
-// `;
+const lightBrown = '#A5C9CA'; // Light brown color
+const darkGray = '#b3a591';
+const lightGray = '#AEA28B';
 
-const ProfileImage = styled.img`
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 20px;
-`;
-
-const PatientName = styled.h5`
-  margin: 0;
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-align: left;
-  width: 100%;
-`;
-
-const PatientText = styled.p`
-  margin: 0;
-  color: gray;
-  text-align: left;
-  width: 100%;
-`;
-
-const CenteredFormGroup = styled(Form.Group)`
+export const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
+  padding: 20px;
+  background-color: ${({ theme }) => theme.bodyBackgroundColor};
 `;
 
-const SummaryDetailsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+
+export const StyledContainer = styled.div`
+  margin-top: 65px;
+`;
+
+export const SectionTitle = styled.h4`
   margin-top: 20px;
   text-align: center;
 `;
@@ -74,75 +55,112 @@ const SummaryItem = styled.p`
   text-align: center;
 `;
 
-const DiagnosisContainer = styled.div`
-  margin-top: 20px;
+export const PatientDetailsContainer = styled.div`
+  flex-direction: column;
+  align-items: center;
+  background-color:  #b798c0;
   padding: 20px;
-  background-color: #f1f1f1;
+  width: 300px;
+  height: 500px;
+  position: absolute;
+  left: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  width: 30%;
-  height: 30%;
 `;
 
-const ComplaintsContainer = styled.div`
-  margin-top: 50px;
-  padding: 20px;
-  background-color: #f1f1f1;
-  border-radius: 10px;
-  width: 30%;
-  height: 30%;
+export const ProfileImage = styled.img`
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 20px;
 `;
 
-const FindingsContainer = styled.div`
-  margin-top: 50px;
-  padding: 20px;
-  background-color: #f1f1f1;
-  border-radius: 10px;
-  width: 30%;
-  height: 30%;
+export const PatientName = styled.h5`
+  margin: 0;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: left;
+  width: 100%;
 `;
 
-const PrescriptionContainer = styled.div`
-  margin-top: 50px;
-  padding: 20px;
-  background-color: #f1f1f1;
+export const PatientText = styled.p`
+  margin: 0;
+  color: gray;
+  text-align: left;
+  width: 100%;
+`;
+
+export const RightContent = styled.div`
+  margin-left: 320px;
+  padding: 10px;
+`;
+
+export const CenteredFormGroup = styled(Form.Group)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+`;
+
+export const SummaryContainer = styled.div`
+  padding: 10px;
+  background-color: #b798c0; // Updated background color
   border-radius: 10px;
   width: 100%;
-  height: 30%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
-const FlexContainer = styled.div`
+const SummaryDetailsContainer = styled.div`
   display: flex;
-  align-items: center;
-`;
-
-const PlanContainer = styled.div`
+  flex-direction: column;
+  align-items: flex-start;
   margin-top: 20px;
   padding: 20px;
-  background-color: #f1f1f1;
+  background-color: #ffffff; // Changed to white background
   border-radius: 10px;
-  width: 70%;
-  margin-left: auto;
-  margin-right: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  margin: 0 auto;
 `;
-// const ProcedureContainer = styled.div`
-//   margin-top: 20px;
-//   padding: 20px;
-//   background-color: #f1f1f1;
-//   border-radius: 10px;
-//   width: 70%;
-//   margin-left: auto;
-//   margin-right: auto;
-// `;
+const SummaryTitle = styled.h3`
+  text-align: center;
+  width: 100%;
+  margin-bottom: 20px;
+  color: #333; // Dark gray color
+`;
 
-const NextVisitonContainer = styled.div`
-  margin-bottom: -2%;
-  height:auto
-  background-color: #f1f1f1;
-  border-radius: 10px;
-  width:auto;
-  margin-left: auto;
-  margin-right: auto;
+
+const SummaryItemTitle = styled.h4`
+  margin-top: 10px;
+  margin-bottom: 10px;
+  color: ${darkGray}; // Dark gray color
 `;
+
+const PatientDetailsRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+  line-height: 1.6;
+`;
+
+const PatientDetailsColumn = styled.div`
+  flex: 1;
+  &:first-child {
+    margin-right: 20px;
+  }
+`;
+
+const Divider = styled.hr`
+  width: 100%;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+`;
+
+
 const DateDisplay = styled.div`
   font-size: 16px;
   color: #333;
@@ -151,65 +169,133 @@ const DateDisplay = styled.div`
 const CalendarIcon = styled(FaCalendarAlt)`
   font-size: 24px;
   cursor: pointer;
-  color: #007bff;
-`;
-const TestContainer = styled.div`
-  margin-top: 20px;
-  padding: 20px;
-  background-color: #f1f1f1;
-  border-radius: 10px;
-  width: 70%;
-  margin-left: auto;
-  margin-right: auto;
-`;
-const SummaryContainer = styled.div`
-  margin-top: 20px;
-  padding: 20px;
-  background-color: #f1f1f1;
-  border-radius: 10px;
-  width: 50%;
-  height:auto;
-  margin-left: auto;
-  margin-right: auto;
+  color: #C85C8E;
 `;
 
-const ImageContainer = styled.div`
-  margin-top: 20px;
+export const ImageContainer = styled.section`
+  flex: 1;
+  margin-right: 10px;
+  padding: 20px;
+  background-color: #b798c0; // Light brown background
+  border-radius: 10px;
   display: flex;
   flex-wrap: wrap;
-  height:auto;
-  width:auto;
-  background-color: #f1f1f1;
   justify-content: flex-start;
 `;
 
-const UploadedImage = styled.img`
-  width: 100px;
-  height: 100px;
+export const UploadedImage = styled.img`
+  width: 80px;
+  height: 80px;
   margin: 5px;
+  object-fit: cover;
+`;
+
+export const SectionTitle2 = styled.h4`
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: ${darkGray}; // Dark gray color
+`;
+
+export const UploadIcon = styled.i`
+  font-size: 3rem;
+  color: #757575; // Gray color
+`;
+
+export const UploadText = styled.p`
+  font-size: 1rem;
+  color: #757575; // Gray color
 `;
 
 
-const PrescriptionDetails = () => {
-  const location = useLocation();
-  const { appointment } = location.state || {};
-  const [diagnosisInputs, setDiagnosisInputs] = useState([{}]);
-  const [complaintsInputs, setComplaintsInputs] = useState([{}]);
-  const [findingsInputs, setFindingsInputs] = useState([{}]);
+export const PrescriptionContainer = styled.section`
+  padding: 20px;
+  background-color: #b798c0; // Light brown background
+  border-radius: 10px;
+  width: 100%;
+`;
+
+export const FlexContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const ContainerRow = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+`;
+
+const NextVisitonContainer = styled.div`
+  flex: 1;
+  margin: 0 15px; // Adjusted margin for balanced spacing
+  padding: 20px;
+  background-color: #b798c0; // Light brown background
+  border-radius: 10px;
+  text-align: center;
+`;
+
+export const PlanContainer = styled.div`
+flex: 1;
+margin: 0 15px; // Adjusted margin for balanced spacing
+padding: 20px;
+background-color: #b798c0; // Light brown background
+border-radius: 10px;
+text-align: center;
+`;
+
+
+const MedicalHistoryButton = styled.div`
+  position: absolute;
+  top: 120px;
+  right: 0;
+  margin: 1rem;
+`;
+
+const BackButton = styled.button`
+    position: absolute;
+    top: 90px;
+    left: 10px;
+    padding: 2px 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+`;
+
+const PrescriptionDetails = () => { 
+  const [patientData, setPatientData] = useState({});
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState([]);
+  const [selectedcomplaints, setSelectedComplaints] = useState([]);
+  const [selectedfindings, setSelectedFindings] = useState([]);
+  const [selectedprocedure, setSelectedprocedure] = useState([]);
   const [prescriptionInputs, setPrescriptionInputs] = useState([
     { selectedPrescription: [], dosage: '', durationNumber: '', duration: '', m: false, a: false, e: false, n: false }
   ]);
+  const handleSelectDiagnosis = (diagnosis) => {
+    setSelectedDiagnosis(diagnosis);
+  };
+  const handleSelectcomplaints = (complaints) => {
+    setSelectedComplaints(complaints);
+  };
+  const handleSelectfindings = (findings) => {
+    setSelectedFindings(findings);
+  };
+  const handleSelectprocedure = (procedure) => {
+    setSelectedprocedure(procedure);
+  };
   
+  const handleSelectTests = (tests) => {
+    setSelectedTests(tests);
+  };
   
-  const [procedureRows, setProcedureRows] = useState([
-    { id: 1, value: '' }
-  ]);
-
   const [planDetails, setPlanDetails] = useState({
     plan1: '',
     plan2: '',
     plan3: ''
   });
+const [showModal, setShowModal] = useState(false); // State to control modal visibility
+const handleModalOpen = () => setShowModal(true); // Open modal
+const handleModalClose = () => setShowModal(false); // Close modal
+
   const [uploadedImages, setUploadedImages] = useState([]);
   const [selectedTests, setSelectedTests] = useState([]);
    const [selectedDate, setSelectedDate] = useState(null);
@@ -234,11 +320,17 @@ const PrescriptionDetails = () => {
     setUploadedImages([...uploadedImages, ...uploaded]);
   };
 
-    
-    const [medicineOptions, setMedicineOptions] = useState([]);
+  const location = useLocation();
+  const { appointment, patientUID,mobileNumber,patientName,appointmentDate } = location.state;
+
+  console.log('Appointment:', appointment);
+  console.log('Patient UID:', patientUID);
+ const [medicineOptions, setMedicineOptions] = useState([]);
+ const [vital, setVital] = useState([]);
 
     useEffect(() => {
-      // Fetch medicine_name options from API
+         
+      // Fetch medicine options from the API
       axios.get('http://127.0.0.1:8000/pharmacy/data/')
         .then(response => {
           const medicineNames = response.data.map(medicine => ({
@@ -250,7 +342,20 @@ const PrescriptionDetails = () => {
           console.error('Error fetching medicine names:', error);
         });
     }, []);
+
+    useEffect(() => {
+      if (!patientUID) return; // Only fetch if patientUID is provided
   
+      axios.get(`http://127.0.0.1:8000/vitalform/?patientUID=${patientUID}`)
+        .then(response => {
+          const vitalResponse = response.data.vital[0]; // Assuming you only get one record
+          setVital(vitalResponse);
+        })
+        .catch(error => {
+          console.error('Error fetching vital data:', error);
+        });
+    }, [patientUID]);
+
     const handlePrescriptionChange = (index, key, value) => {
       const newInputs = [...prescriptionInputs];
       newInputs[index][key] = value;
@@ -276,17 +381,14 @@ const PrescriptionDetails = () => {
       setPrescriptionInputs(newInputs);
     };
   
-  const handleAddRow = () => {
-    const newRow = { id: procedureRows.length + 1, value: '' };
-    setProcedureRows([...procedureRows, newRow]);
-  };
-
-  const handleInputChange = (id, newValue) => {
-    const updatedRows = procedureRows.map(row =>
-      row.id === id ? { ...row, value: newValue } : row
-    );
-    setProcedureRows(updatedRows);
-  };
+    const calculateTotalDosage = (input) => {
+      const dosage = parseFloat(input.dosage) || 0;
+      const durationNumber = parseInt(input.durationNumber) || 0;
+      const durationFactor = input.duration === 'Months' ? 30 : 1;
+      const timesSelected = (input.m ? 1 : 0) + (input.a ? 1 : 0) + (input.e ? 1 : 0) + (input.n ? 1 : 0);
+      return dosage * timesSelected * durationNumber * durationFactor;
+    };
+ 
 
   const handlePlanChange = (event) => {
     const { id, value } = event.target;
@@ -296,35 +398,71 @@ const PrescriptionDetails = () => {
     }));
   };
 
-  const handleTestsChange = (selected) => {
-    setSelectedTests(selected);
+  const [images, setImages] = useState([]);
+  const [message, setMessage] = useState('');
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    const uploaded = files.map((file) => ({
+      src: URL.createObjectURL(file),
+      alt: file.name,
+    }));
+    setUploadedImages(prevImages => [...prevImages, ...uploaded]);
+    setImages(prevImages => [...prevImages, ...files]);
+  };
+  const handleSubmit2 = async () => {
+    if (images.length === 0) {
+      setMessage('Please select at least one image');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('patient_name', appointment.patientName+'_'+appointment.patientUID+'_'+appointmentDate); // Ensure patientName is included
+    images.forEach(image => formData.append('images', image)); // Append each image to formData
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/upload_file/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setMessage('Images uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      setMessage('Failed to upload images');
+    }
   };
 
-  const handleAddInput = (setInputs) => {
-    setInputs((prev) => [...prev, {}]);
-  };
-
-  const handleDeleteInput = (index, setInputs, inputs) => {
-    setInputs(inputs.filter((_, i) => i !== index));
-  };
-
- 
-  
+  console.log('patientData',patientData)
   const handleSubmit = async () => {
     const summaryData = {
-        patient_name: appointment.patientName,
-        diagnosis: diagnosisInputs.map(input => input.selectedDiagnosis?.map(d => d.label).join(', ') || 'None').join('\n'),
-        complaints: complaintsInputs.map(input => input.selectedComplaints?.map(c => c.label).join(', ') || 'None').join('\n'),
-        findings: findingsInputs.map(input => input.selectedFindings?.map(f => f.label).join(', ') || 'None').join('\n'),
+        patientName: patientName,
+        patientUID: patientUID,
+        mobileNumber: mobileNumber,
+        appointmentDate:appointmentDate,
+        diagnosis: selectedDiagnosis.map(diagnosis => diagnosis.diagnosis).join(', ') || 'None',
+        complaints: selectedcomplaints.map(complaints => complaints.complaints).join(', ') || 'None',
+        findings: selectedfindings.map(findings => findings.findings).join(', ') || 'None',   
+        proceduresList : selectedprocedure.map(procedure => ({
+          procedure: procedure.selectedProcedures.map(p => p.procedure).join(', '),
+          date: procedure.selectedDate ? formatDate(procedure.selectedDate) : 'None'
+        })).map(proc => `Procedure: ${proc.procedure} - Date: ${proc.date}`).join('\n'),
+
+
         prescription: prescriptionInputs.map(input => {
             const times = ['M', 'A', 'E', 'N'].map(time => input[time.toLowerCase()] ? time : '').filter(Boolean).join(' ');
-            return `${input.selectedPrescription?.map(p => p.label).join(', ') || 'None'} - Dosage: ${input.dosage || 'N/A'} - ${times} - Duration: ${input.durationNumber || 'N/A'} ${input.duration || ''}`;
+            const totalDosage = calculateTotalDosage(input);
+            return `Precription: ${input.selectedPrescription?.map(p => p.label).join(', ') || 'None'} - Dosage: ${input.dosage || 'N/A'} - ${times} - Duration: ${input.durationNumber || 'N/A'} ${input.duration || ''} - Total Dosage: ${totalDosage}`;
         }).join('\n'),
         plans: `Plan1: ${planDetails.plan1 || 'None'}\nPlan2: ${planDetails.plan2 || 'None'}\nPlan3: ${planDetails.plan3 || 'None'}`,
-        tests: selectedTests.map(test => test.label).join(', ') || 'None',
-        procedures: procedureRows.map(row => row.value).join('\n') || 'None',
+        tests: (selectedTests && selectedTests.length > 0)
+      ? selectedTests.map(test => test.test).join(', ')
+      : 'None',
         uploadedImages: uploadedImages.map(img => ({ src: img.src, alt: img.alt })),
-        nextVisit: selectedDate ? selectedDate.toISOString() : null, // Convert to ISO format if needed by backend
+        nextVisit: selectedDate ? formatDate(selectedDate) : null, // Convert to ISO format if needed by backend
+        vital: {
+            height: vital?.height || 'N/A',
+            weight: vital?.weight || 'N/A',
+            pulseRate: vital?.pulseRate || 'N/A',
+            bloodPressure: vital?.bloodPressure || 'N/A'
+        }
     };
 
     try {
@@ -335,207 +473,305 @@ const PrescriptionDetails = () => {
     }
 };
 
+const handleSubmitAll = async (e) => {
+  e.preventDefault();
+  try {
+    await handleSubmit();
+    await handleSubmit2();
+    setMessage('summary saved successfully');
+  } catch (error) {
+    console.error('Error in handleSubmitAll:', error);
+    setMessage('Failed to complete operations');
+  }
+};
+const summaryRef = useRef(null);
 
-  
-
-  
 const getSummaryDetails = () => {
-  const diagnosis = diagnosisInputs.map((input, index) =>
-      `${index + 1}. ${input.selectedDiagnosis?.map(d => d.label).join(', ') || 'None'}`
-  ).join('\n') || 'None';
 
-  const complaints = complaintsInputs.map((input, index) =>
-      `${index + 1}. ${input.selectedComplaints?.map(c => c.label).join(', ') || 'None'}`
-  ).join('\n') || 'None';
-
-  const findings = findingsInputs.map((input, index) =>
-      `${index + 1}. ${input.selectedFindings?.map(f => f.label).join(', ') || 'None'}`
-  ).join('\n') || 'None';
+  // Content generation
+  const diagnosissummary = selectedDiagnosis.map((diagnosis) => (
+    <li key={diagnosis.id}>{diagnosis.diagnosis}</li>
+  ));
+  const complaintssummary = selectedcomplaints.map((complaints) => (
+    <li key={complaints.id}>{complaints.complaints}</li>
+  ));
+  const findingssummary = selectedfindings.map((findings) => (
+    <li key={findings.id}>{findings.findings}</li>
+  ));
+  const proceduresummary = selectedprocedure.map((procedure, index) => (
+    <li key={index}>
+      {procedure.selectedProcedures.map(p => p.procedure).join(', ')} - Date: {procedure.selectedDate ? formatDate(new Date(procedure.selectedDate)) : 'None'}
+    </li>
+  ));
 
   const prescriptionSummary = prescriptionInputs.map((input, index) => {
-      const times = ['M', 'A', 'E', 'N'].map(time => input[time.toLowerCase()] ? time : '').filter(Boolean).join(' ');
-      return `${index + 1}. ${input.selectedPrescription?.map(p => p.label).join(', ') || 'None'} - Dosage: ${input.dosage || 'N/A'} - ${times} - Duration: ${input.durationNumber || 'N/A'} ${input.duration || ''}`;
+    const times = ['M', 'A', 'E', 'N'].map(time => input[time.toLowerCase()] ? time : '').filter(Boolean).join(' ');
+    return `${index + 1}. ${input.selectedPrescription?.map(p => p.label).join(', ') || 'None'} - Dosage: ${input.dosage || 'N/A'} - ${times} - Duration: ${input.durationNumber || 'N/A'} ${input.duration || ''}`;
   }).join('\n') || 'None';
 
   const plans = [
-      `Plan1: ${planDetails.plan1 || 'None'}`,
-      `Plan2: ${planDetails.plan2 || 'None'}`,
-      `Plan3: ${planDetails.plan3 || 'None'}`
+    `Plan1: ${planDetails.plan1 || 'None'}`,
+    `Plan2: ${planDetails.plan2 || 'None'}`,
+    `Plan3: ${planDetails.plan3 || 'None'}`
   ].join('\n');
 
-  const procedures = procedureRows.map((row, index) => `${index + 1}. ${row.value}`).join('\n') || 'None';
-  const tests = `Tests: ${selectedTests.map(test => test.label).join(', ') || 'None'}`;
+  const testsSummary = selectedTests.map(test => test.test).join(', ') || 'None';
+
   const nextVisitDate = selectedDate ? selectedDate.toLocaleDateString() : 'None';
 
-  // Render images as <img> elements
-  const Images = uploadedImages.map((img, index) => (
-      <img key={index} src={img.src} alt={img.alt} style={{ maxWidth: '100%', height: 'auto', margin: '10px' }} />
-  ));
+  const summaryContent = (
+    <SummaryDetailsContainer>
+      <SummaryTitle>Summary</SummaryTitle>
+
+      {/* Patient Details */}
+      <PatientDetailsRow>
+        <PatientDetailsColumn>
+          <div><strong>NAME:</strong> {appointment.patientName}</div>
+          <div><strong>SEX:</strong> {appointment.gender}</div>
+        </PatientDetailsColumn>
+        <PatientDetailsColumn>
+          <div><strong>MOBILE:</strong> {appointment.mobileNumber}</div>
+        </PatientDetailsColumn>
+      </PatientDetailsRow>
+      <Divider />
+
+      {/* Diagnosis */}
+      <SummaryItemTitle>Diagnosis</SummaryItemTitle>
+      <ul>
+        {diagnosissummary}
+      </ul>
+      <Divider />
+
+      {/* Complaints */}
+      <SummaryItemTitle>Complaints</SummaryItemTitle>
+      <ul>
+        {complaintssummary}
+      </ul>
+      <Divider />
+
+      {/* Findings */}
+      <SummaryItemTitle>Findings</SummaryItemTitle>
+      <ul>
+        {findingssummary}
+      </ul>
+      <Divider />
+
+      {/* Procedures */}
+      <SummaryItemTitle>Procedures</SummaryItemTitle>
+      <ul>
+        {proceduresummary}
+      </ul>
+      <Divider />
+
+      {/* Prescription */}
+      <SummaryItemTitle>Prescription</SummaryItemTitle>
+      <ul>
+        <li>{prescriptionSummary}</li>
+      </ul>
+      <Divider />
+
+      {/* Plans */}
+      <SummaryItemTitle>Plans</SummaryItemTitle>
+      <ul>
+        <li>{plans}</li>
+      </ul>
+      <Divider />
+
+      {/* Tests */}
+      <SummaryItemTitle>Tests</SummaryItemTitle>
+      <ul>
+        <li>{testsSummary}</li>
+      </ul>
+      <Divider />
+
+      {/* Images */}
+      <SummaryItemTitle>Images</SummaryItemTitle>
+      <ImageContainer>
+        {uploadedImages.map((image, index) => (
+          <img key={index} src={image.src} alt={image.alt} style={{ maxWidth: '100%', height: 'auto', margin: '10px' }} />
+        ))}
+        {uploadedImages.length === 0 && <UploadText>No images uploaded</UploadText>}
+      </ImageContainer>
+    </SummaryDetailsContainer>
+  );
+
+  const convertToBase64 = (url, callback) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = url;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/png');
+      callback(dataURL);
+    };
+    img.onerror = error => console.error('Error converting image to Base64:', error);
+  };
+
+  // Export to PDF function
+  const exportToPDF = () => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const headerFooterHeight = 35;
+
+    // Convert images to Base64
+    convertToBase64(PDFHeader, headerImage => {
+      convertToBase64(PDFFooter, footerImage => {
+        // Header Image - Full width
+        pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerFooterHeight);
+
+        let startY = headerFooterHeight + 10;
+
+        // Function to create sub-table rows for sections with multiple entries
+        const createSubTableRows = (label, entries) => {
+          if (!entries || entries.length === 0) {
+            return [[label, 'None']];
+          }
+          return entries.map((entry, index) => [index === 0 ? label : '', entry]);
+        };
+
+        // Prepare the data for the table
+        let data = [];
+
+        data = data.concat(createSubTableRows('Diagnosis', selectedDiagnosis.map(d => d.diagnosis)));
+        data = data.concat(createSubTableRows('Complaints', selectedcomplaints.map(c => c.complaints)));
+        data = data.concat(createSubTableRows('Findings', selectedfindings.map(f => f.findings)));
+
+        // Procedures need special handling to include the date
+        data = data.concat(createSubTableRows('Procedures', selectedprocedure.map(p => `${p.selectedProcedures.map(proc => proc.procedure).join(', ')} - Date: ${p.selectedDate ? formatDate(new Date(p.selectedDate)) : 'None'}`)));
+
+        // The rest of the data remains as single entries
+        data.push(['Prescription', prescriptionSummary]);
+        data.push(['Plans', `${planDetails.plan1 || 'None'}, ${planDetails.plan2 || 'None'}, ${planDetails.plan3 || 'None'}`]);
+        data = data.concat(createSubTableRows('Tests', selectedTests.map(test => test.test)));
+        data.push(['Next Visit Date', selectedDate ? selectedDate.toLocaleDateString() : 'None']);
+
+        // Create a single table with all the data and adjust the table width
+        pdf.autoTable({
+          startY,
+          head: [['Section', 'Details']],
+          body: data,
+          theme: 'grid',
+          headStyles: { fillColor: [22, 160, 133] },
+          styles: {
+            cellWidth: 'wrap',
+            minCellHeight: 10,
+            overflow: 'linebreak',
+            tableWidth: 'auto',
+            margin: { left: 10, right: 10 },
+          },
+          columnStyles: {
+            0: { cellWidth: 60 }, // First column width
+            1: { cellWidth: pageWidth - 80 }, // Second column width
+          },
+          margin: { top: startY, bottom: headerFooterHeight },
+          didDrawPage: (data) => {
+            pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerFooterHeight);
+            pdf.addImage(footerImage, 'PNG', 0, pageHeight - headerFooterHeight, pageWidth, headerFooterHeight);
+          }
+        });
+
+        // Add images
+        let currentY = pdf.lastAutoTable.finalY + 10;
+        uploadedImages.forEach((img, index) => {
+          const imageHeight = 50;
+          if (currentY + imageHeight > pageHeight - headerFooterHeight - 20) {
+            pdf.addPage();
+            currentY = headerFooterHeight + 10;
+          }
+          pdf.addImage(img.src, 'JPEG', 10, currentY, 50, imageHeight);
+          currentY += imageHeight + 5;
+        });
+
+        // Save the PDF
+        pdf.save('report.pdf');
+      });
+    });
+  };
 
   return (
-      <SummaryDetailsContainer>
-          <SummaryItem><strong>Diagnosis:</strong><br /> {diagnosis}</SummaryItem>
-          <SummaryItem><strong>Complaints:</strong><br /> {complaints}</SummaryItem>
-          <SummaryItem><strong>Findings:</strong><br /> {findings}</SummaryItem>
-          <SummaryItem><strong>Prescription:</strong><br /> {prescriptionSummary}</SummaryItem>
-          <SummaryItem><strong>Plans:</strong><br /> {plans}</SummaryItem>
-          <SummaryItem><strong>Tests:</strong><br /> {tests}</SummaryItem>
-          <SummaryItem>Procedures:<br /> {procedures}</SummaryItem>
-          <SummaryItem><strong>Images:</strong><br /> {Images.length > 0 ? Images : 'None'}</SummaryItem>
-          <SummaryItem><strong>Next Visit Date:</strong><br /> {nextVisitDate}</SummaryItem>
-      </SummaryDetailsContainer>
+    <div ref={summaryRef}>
+      {summaryContent}
+      <button onClick={exportToPDF}>Export to PDF</button>
+    </div>
   );
 };
 
-  
-  
-  if (!appointment) {
-    return <div>No appointment data available.</div>;
-  }
-
-  const transformList = list => list.map(item => ({ label: item }));
-
   return (
-    <div>
-      {/* <PatientDetailsContainer>
-        <ProfileImage src={appointment.gender === 'Male' ? male : female} alt="Profile" />
-        <PatientName className='mt-1'>Name: {appointment.patientName}</PatientName>
-        <PatientText className='mt-1'>Phone: {appointment.mobileNumber}</PatientText>
-        <PatientText className='mt-1'>Height:</PatientText>
-        <PatientText className='mt-1'>Weight:</PatientText>
-        <PatientText className='mt-1'>Pulse of Rate:</PatientText>
-        <PatientText className='mt-1'>BP:</PatientText>
-        <PatientText className='mt-1'>Purpose Of Visit: {appointment.purposeOfVisit}</PatientText>
-      </PatientDetailsContainer> */}
-      <br />
-
+    <StyledContainer>
       <Tab.Container defaultActiveKey="consulting-room">
-        <Nav variant="pills" style={{ justifyContent: 'center' }}>
-          <Nav.Item>
-            <Nav.Link eventKey="consulting-room">Consulting Room</Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="instructions">Instructions</Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="summary">Summary</Nav.Link>
-          </Nav.Item>
-         
-        </Nav>
-        <Tab.Content>
-          <Tab.Pane eventKey="consulting-room">
-            <br />
-            <Col>
-            <center>
-              <DiagnosisContainer>
-                {diagnosisInputs.map((input, index) => (
-                 
-                  <Row className="justify-content-center mb-3" key={index}>
-                    <CenteredFormGroup as={Col} md="4" controlId={`diagnosis-${index}`}>
-                      <Form.Label>Diagnosis</Form.Label>
-                      <FlexContainer>
-                        <BsPatchPlusFill size={24} onClick={() => handleAddInput(setDiagnosisInputs)} />
-                        <Typeahead className='ms-2'
-                          id={`diagnosis-typeahead-${index}`}
-                          labelKey="label"
-                          onChange={selected => {
-                            const newInputs = [...diagnosisInputs];
-                            newInputs[index] = { selectedDiagnosis: selected };
-                            setDiagnosisInputs(newInputs);
-                          }}
-                          options={transformList(diagnosisList)}
-                          placeholder="Select Diagnosis"
-                          selected={Array.isArray(input.selectedDiagnosis) ? input.selectedDiagnosis : []}
-                        />
-                        <MdDelete size={24} onClick={() => handleDeleteInput(index, setDiagnosisInputs, diagnosisInputs)} />
-                      </FlexContainer>
-                    </CenteredFormGroup>
-                  </Row>
-                ))}
-              </DiagnosisContainer>
-              <br />
-            <ImageContainer>
-              <SectionTitle>Images</SectionTitle>
-              <br/>
-            <Form.Group controlId="formFileMultiple" className="mb-3">
-              <Form.Label> </Form.Label>
-              <div>
-                <input type="file" multiple onChange={handleImageUpload} />
-               
-              </div>
-            </Form.Group>
-            {uploadedImages.map((image, index) => (
-              <Row key={index}>
-                <Col>
-                  <UploadedImage src={image.src} alt={image.alt} />
-                </Col>
-              </Row>
-            ))}
-          </ImageContainer>
-            </center>
-            <br />
+      <Nav style={{ justifyContent: 'center' }}>
+        <Nav.Item>
+          <Nav.Link eventKey="consulting-room" style={{ color: "#725F83" }}>
+            Consulting Room
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="instructions" style={{ color: "#725F83" }}>
+            Instructions
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="summary" style={{ color: "#725F83" }}>
+            Summary
+          </Nav.Link>
+        </Nav.Item>
+      </Nav>
 
-            <center>
-              <ComplaintsContainer>
-                {complaintsInputs.map((input, index) => (
-                  <Row className="justify-content-center mb-3" key={index}>
-                    <CenteredFormGroup as={Col} md="4" controlId={`complaints-${index}`}>
-                      <Form.Label>Complaints</Form.Label>
-                      <FlexContainer>
-                        <BsPatchPlusFill size={24} onClick={() => handleAddInput(setComplaintsInputs)} />
-                        <Typeahead className='ms-2'
-                          id={`complaints-typeahead-${index}`}
-                          labelKey="label"
-                          onChange={selected => {
-                            const newInputs = [...complaintsInputs];
-                            newInputs[index] = { selectedComplaints: selected };
-                            setComplaintsInputs(newInputs);
-                          }}
-                          options={transformList(patientComplaints)}
-                          placeholder="Select Complaints"
-                          selected={Array.isArray(input.selectedComplaints) ? input.selectedComplaints : []}
-                        />
-                        <MdDelete size={24} onClick={() => handleDeleteInput(index, setComplaintsInputs, complaintsInputs)} />
-                      </FlexContainer>
-                    </CenteredFormGroup>
-                  </Row>
-                  
-                ))}
-              </ComplaintsContainer>
+      <Tab.Content>
+        <Tab.Pane eventKey="consulting-room">
+        <RightContent>
+          <PatientDetailsContainer>
+            <ProfileImage src={appointment.gender === 'Male' ? male : female} alt="Profile" />
+            <PatientName className='mt-1'>Name: {patientName}</PatientName>
+            <PatientText className='mt-1'>Phone: {mobileNumber}</PatientText>
+            <PatientText className='mt-1'>Height: {vital?.height}</PatientText>
+            <PatientText className='mt-1'>Weight: {vital?.weight}</PatientText>
+            <PatientText className='mt-1'>Pulse Rate: {vital?.pulseRate}</PatientText>
+            <PatientText className='mt-1'>Blood Pressure: {vital?.bloodPressure}</PatientText>
+            <PatientText className='mt-1'>Purpose Of Visit: {appointment.purposeOfVisit}</PatientText>
+          </PatientDetailsContainer>
+
+        <ContainerRow>
+         <Diagnosis onSelectDiagnosis={handleSelectDiagnosis} />
+            <ImageContainer>
+              <label htmlFor="upload-button" style={{ cursor: 'pointer' }}>
+                <BiImageAdd style={{ fontSize: '3rem', color: '#757575' }} />
+              </label>
               
-            </center>
-            </Col>
-            
-            <br />
-            <center>
-              <FindingsContainer>
-                {findingsInputs.map((input, index) => (
-                  <Row className="justify-content-center mb-3" key={index}>
-                    <CenteredFormGroup as={Col} md="4" controlId={`findings-${index}`}>
-                      <Form.Label>Findings</Form.Label>
-                      <FlexContainer>
-                        <BsPatchPlusFill size={24} onClick={() => handleAddInput(setFindingsInputs)} />
-                        <Typeahead className='ms-2'
-                          id={`findings-typeahead-${index}`}
-                          labelKey="label"
-                          onChange={selected => {
-                            const newInputs = [...findingsInputs];
-                            newInputs[index] = { selectedFindings: selected };
-                            setFindingsInputs(newInputs);
-                          }}
-                          options={transformList(findingsList)}
-                          placeholder="Select Findings"
-                          selected={Array.isArray(input.selectedFindings) ? input.selectedFindings : []}
-                        />
-                        <MdDelete size={24} onClick={() => handleDeleteInput(index, setFindingsInputs, findingsInputs)} />
-                      </FlexContainer>
-                    </CenteredFormGroup>
-                  </Row>
-                ))}
-              </FindingsContainer>
-            </center>
-            <br />
-            <center>
+              <Form.Group controlId="formFileMultiple" className="mb-3">
+                <label htmlFor="upload-button" style={{ cursor: 'pointer' }}>
+                </label>
+                <input
+                  id="upload-button"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+              </Form.Group>
+              
+              {uploadedImages.map((image, index) => (
+                <Row key={index}>
+                  <Col>
+                    <UploadedImage src={image.src} alt={image.alt} />
+                  </Col>
+                </Row>
+              ))}
+              {uploadedImages.length === 0 && (
+                <UploadText></UploadText>
+              )}
+            </ImageContainer>
+         </ContainerRow>
+         <ContainerRow>
+            <Complaints onSelectComplaints ={handleSelectcomplaints}/>
+            <Findings onSelectFindings ={handleSelectfindings}/>
+        </ContainerRow>
+       <br/> 
      <PrescriptionContainer>
     <SectionTitle>Prescription</SectionTitle>
     {prescriptionInputs.map((input, index) => (
@@ -558,7 +794,7 @@ const getSummaryDetails = () => {
               onChange={(e) => handlePrescriptionChange(index, 'dosage', e.target.value)}
             />
           </Col>
-          <Col sm="4">
+          <Col sm="3">
             <Form.Check
               inline
               label="M"
@@ -604,10 +840,7 @@ const getSummaryDetails = () => {
             >
               <option value="">Duration</option>
               <option value="Days">Days</option>
-              <option value="Weeks">Weeks</option>
               <option value="Months">Months</option>
-              <option value="Years">Years</option>
-              <option value="To Be Continued">To Be Continued</option>
             </Form.Control>
           </Col>
           <Col sm="2">
@@ -616,120 +849,94 @@ const getSummaryDetails = () => {
           </Col>
         </Form.Group>
       ))}
-  </PrescriptionContainer>
-            </center>
-            <br />
+    </PrescriptionContainer>
+    </RightContent>
           </Tab.Pane>
 
-          <Tab.Pane eventKey="instructions">
-            <br />
-            <PlanContainer>
-              <Row className="justify-content-center">
-                <Col md="3" className="text-center">
-                  <Form.Group controlId="plan1">
-                    <Form.Label>Plan1</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter Plan1 details"
-                      value={planDetails.plan1}
-                      onChange={handlePlanChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md="3" className="text-center">
-                  <Form.Group controlId="plan2">
-                    <Form.Label>Plan2</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter Plan2 details"
-                      value={planDetails.plan2}
-                      onChange={handlePlanChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md="3" className="text-center">
-                  <Form.Group controlId="plan3">
-                    <Form.Label>Plan3</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Enter Plan3 details"
-                      value={planDetails.plan3}
-                      onChange={handlePlanChange}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-            </PlanContainer>
-            <SectionTitle>Tests</SectionTitle>
-            <center>
-              <TestContainer>
-                <Form>
-                  <Form.Group controlId="tests">
-                    <Form.Label>Tests</Form.Label>
-                    <Typeahead
-                      id="test-combobox"
-                      labelKey="label"
-                      multiple
-                      options={test.map(item => ({ label: item }))}
-                      placeholder="Select Tests"
-                      onChange={handleTestsChange}
-                      selected={selectedTests}
-                    />
-                  </Form.Group>
-                </Form>
-              </TestContainer>
-            </center>
-            <SectionTitle>Procedure</SectionTitle>
-            {/* <ProcedureContainer>
-              {procedureRows.map(row => (
-                <Row key={row.id} className="mb-3">
-                  <Col>
-                    <Form.Control
-                      type="text"
-                      placeholder={`Procedure ${row.id}`}
-                      value={row.value}
-                      onChange={e => handleInputChange(row.id, e.target.value)}
-                    />
-                  </Col>
-                </Row>
-              ))}
-              <button onClick={handleAddRow}>Add Procedure</button>
-            </ProcedureContainer> */}
-        <center>
-      <NextVisitonContainer>
-        <SectionTitle>Next Visit</SectionTitle>
-        <DatePicker
-          selected={selectedDate}
-          onChange={handleDateChange}
-          customInput={<CalendarIcon />}
-          popperPlacement="bottom-end"
-          dateFormat="dd/MM/yyyy"
-        />
-      
-        <DateDisplay>
-          <br/>
-          {selectedDate ? `Next Visit on: ${formatDate(selectedDate)}` : 'Next Visit on: Select a date'}
-        </DateDisplay>
-      </NextVisitonContainer>
-    </center>
-          </Tab.Pane>
+      <Tab.Pane eventKey="instructions">
+        <PlanContainer>
+          <Row className="justify-content-around"> {/* Use 'around' to create equal spacing around items */}
+            <Col md="3" className="text-center">
+              <Form.Group controlId="plan1">
+                <Form.Label>Plan1</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Plan1 details"
+                  value={planDetails.plan1}
+                  onChange={handlePlanChange}
+                />
+              </Form.Group>
+            </Col>
+            <Col md="3" className="text-center">
+              <Form.Group controlId="plan2">
+                <Form.Label>Plan2</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Plan2 details"
+                  value={planDetails.plan2}
+                  onChange={handlePlanChange}
+                />
+              </Form.Group>
+            </Col>
+            <Col md="3" className="text-center">
+              <Form.Group controlId="plan3">
+                <Form.Label>Plan3</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Plan3 details"
+                  value={planDetails.plan3}
+                  onChange={handlePlanChange}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+        </PlanContainer>
 
+        <ContainerRow>
+          <Tests onSelectTests={handleSelectTests} />
+          <Procedures onSelectProcedures={handleSelectprocedure}/>
+        </ContainerRow>
+
+        <ContainerRow>
+          <NextVisitonContainer>
+            <SectionTitle>Next Visit</SectionTitle>
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleDateChange}
+              customInput={<CalendarIcon />}
+              popperPlacement="bottom-end"
+              dateFormat="dd/MM/yyyy"
+            />
+            <DateDisplay>
+              {selectedDate ? `Next Visit on: ${formatDate(selectedDate)}` : 'Next Visit on: Select a date'}
+            </DateDisplay>
+          </NextVisitonContainer>
+        </ContainerRow>
+          </Tab.Pane>
           <Tab.Pane eventKey="summary">
-            <br />
-            <SummaryContainer>
-              <center>
-              {getSummaryDetails()}
-              <button onClick={handleSubmit} >
-                  Save 
-           </button>
-                </center>
-            </SummaryContainer>   
+      <MedicalHistoryButton><button  onClick={handleModalOpen}>Medical History</button></MedicalHistoryButton>
+      <br/>
+      <Modal show={showModal} onHide={handleModalClose} className="custom-modal-width">
+        <Modal.Header closeButton>
+          <Modal.Title>MedicalHistory</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+        <MedicalHistory/>
+        </Modal.Body>
+      </Modal>
+      <SummaryContainer>
+      <center>
+        {getSummaryDetails()}
+        <button onClick={handleSubmitAll}>
+          Save
+        </button>
+        {message && <p>{message}</p>}
+      </center>
+    </SummaryContainer>    
           </Tab.Pane>
-         
-
         </Tab.Content>
       </Tab.Container>
-    </div>
+    </StyledContainer>
   );
 };
 

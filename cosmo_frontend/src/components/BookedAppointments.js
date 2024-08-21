@@ -77,7 +77,8 @@ function BookedAppointments() {
     const timeSlots = generateTimeSlots();
 
     const handleViewDetailsClick = (appointment) => {
-        navigate('/prescription', { state: { appointment } });
+        navigate('/Doctor/prescription', { state: { appointment, appointmentDate: appointment.appointmentDate, patientUID: appointment.patientUID ,
+            patientName:appointment.patientName,mobileNumber:appointment.mobileNumber} });
     };
 
     const nextPage = () => {
@@ -95,7 +96,7 @@ function BookedAppointments() {
     const currentSlots = timeSlots.slice(currentPage * cardsPerPage, (currentPage + 1) * cardsPerPage);
 
     return (
-        <div className="appointments-container mt-4">
+        <StyledContainer className="appointments-container">
             <h3 className="text-center mb-4">Booked Appointments</h3>
             <div className="date-picker-wrapper">
                 <input type="date" value={selectedDate} onChange={handleDateChange} className="date-picker" />
@@ -137,7 +138,7 @@ function BookedAppointments() {
                                 {hasAppointments && (
                                     <div className="flip-card-back">
                                         <AppointmentDetails>
-                                            <h3 style={{fontSize:"1.5rem"}}>Appointment Details</h3>
+                                            <h4 style={{fontSize:"1.3rem"}}>Appointment Details</h4>
                                             {hasAppointments && (
                                                 <center><Button className='mt-4' onClick={() => handleViewDetailsClick(appointmentsInSlot[0])}>View Details</Button></center>
                                             )}
@@ -149,12 +150,16 @@ function BookedAppointments() {
                     );
                 })}
             </div>
-        </div>
+        </StyledContainer>
     );
 }
 
+const StyledContainer = styled.div`
+    margin-top: 65px;
+`;
+
 const TopSection = styled.div`
-    background-color: #A5C9CA;
+    background-color: #725F83;
     color: white;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
@@ -224,8 +229,6 @@ const Pagination = styled.div`
 
 const PaginationButton = styled.button`
     padding: 10px 20px;
-    background-color: #A5C9CA;
-    color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;

@@ -1,12 +1,12 @@
 .form-container {
-    background-image: url('../components/images/background-image.png');
+    background-image: url('../components/images/background.png');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    min-height: 100vh; /* Ensure the container takes up at least the full height of the viewport */
+    color: #34194d;
   }
 
   .custom-input {
@@ -52,4 +52,8 @@
   .gender-option div {
     margin-top: 5px;
   }
-  
+
+  .modal-width .modal-dialog {
+    margin-top: 110px;
+    max-width: 30%;
+}

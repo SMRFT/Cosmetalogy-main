@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import Notification from './Notification';
 import Logo from './images/salem-cosmetic-logo.png';
@@ -7,38 +7,55 @@ import SignOut from './SignOut';
 
 const DoctorLoginHeader = () => {
   return (
-    <HeaderContainer>
-      <HeaderLeft>
-        <LogoContainer>
-          <img src={Logo} alt="Logo" />
-        </LogoContainer>
-        <Navigation>
-          <NavItem>
-            <StyledLink to="/Doctor/BookedAppointments">Appointments</StyledLink>
-          </NavItem>
-          <NavItem>
-            <StyledLink to="/Doctor/PatientDetails">Patient Details</StyledLink>
-          </NavItem>
-          <NavItem>
-            <StyledLink to="/Doctor/Report">Report</StyledLink>
-          </NavItem>
-        </Navigation>
-      </HeaderLeft>
-      <HeaderRight>
-        <Notification />
-        <SignOut />
-      </HeaderRight>
-    </HeaderContainer>
+    <>
+      <TopContainer>
+        <HeaderRight>
+          <Notification />
+          <SignOut />
+        </HeaderRight>
+      </TopContainer>
+      <HeaderContainer>
+        <HeaderLeft>
+          <LogoContainer>
+            <img src={Logo} alt="Logo" />
+          </LogoContainer>
+          <Navigation>
+            <NavItem>
+              <StyledNavLink to="/Doctor/BookedAppointments">Appointments</StyledNavLink>
+            </NavItem>
+            <NavItem>
+              <StyledNavLink to="/Doctor/PatientDetails">Patient Details</StyledNavLink>
+            </NavItem>
+            <NavItem>
+              <StyledNavLink to="/Doctor/Report">Report</StyledNavLink>
+            </NavItem>
+          </Navigation>
+        </HeaderLeft>
+      </HeaderContainer>
+    </>
   );
 };
 
+const TopContainer = styled.header`
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 50px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background: radial-gradient(circle, #A07BC6 0%, #7F54A9 100%);
+  z-index: 1001;
+  padding: 0 15px;
+`;
+
 const HeaderContainer = styled.header`
+  position: fixed;
+  top: 50px; /* Position it right below the TopContainer */
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  position: fixed;
-  top: 0;
   background: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 10px 15px;
@@ -98,18 +115,24 @@ const NavItem = styled.div`
   }
 `;
 
-const StyledLink = styled(Link)`
+const StyledNavLink = styled(NavLink)`
   text-decoration: none;
-  color: rgb(111, 136, 132);
-  font-size: 1.2rem;
+  color: #766087;
+  font-size: 1.3rem;
   margin: 0 15px;
   display: inline-block;
-  transition: color 0.3s, font-size 0.3s;
+  transition: color 0.3s, transform 0.3s;
   font-family: initial;
 
+  &.active {
+    font-size: 1.4rem; /* Increase font size when active */
+    font-weight: bold;
+    color: #9a85aa;
+  }
+
   &:hover {
-    color: #CCB268;
-    font-size: 1.4rem;
+    transform: scale(1.1);
+    color: #9a85aa;
   }
 
   @media (max-width: 480px) {

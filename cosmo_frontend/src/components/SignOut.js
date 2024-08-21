@@ -65,21 +65,23 @@ const SignOut = () => {
 
 const SignOutIcon = styled.div`
   position: fixed;
-  top: 28px;
+  top: 10px;
   right: 10px;
-  font-size: 1rem;
+  font-weight: bold;
   cursor: pointer;
 
-  svg {
+   svg {
     font-size: 2rem;
-    color: grey;
+    color: white;
+    font-weight: bold;
   }
 
   &:hover {
     svg {
-      color: black;
+      color: white;
     }
   }
+
 `;
 
 

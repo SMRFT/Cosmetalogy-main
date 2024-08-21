@@ -4,65 +4,100 @@ import { IoMdClose } from "react-icons/io";
 import { FaRegBell } from "react-icons/fa";
 import { Alert } from 'react-bootstrap';
 import styled from 'styled-components';
-import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import SignOut from './SignOut';
 
 const Notification = () => {
-const [lowQuantityMedicines, setLowQuantityMedicines] = useState([]);
-const [nearExpiryMedicines, setNearExpiryMedicines] = useState([]);
-const [panelVisible, setPanelVisible] = useState(false);
+  const [lowQuantityMedicines, setLowQuantityMedicines] = useState([]);
+  const [nearExpiryMedicines, setNearExpiryMedicines] = useState([]);
+  const [upcomingVisits, setUpcomingVisits] = useState([]);
+  const [panelVisible, setPanelVisible] = useState(false);
 
-useEffect(() => {
-  axios.get('http://127.0.0.1:8000/check_medicine_status/')
-    .then(response => {
-      setLowQuantityMedicines(response.data.low_quantity_medicines);
-      setNearExpiryMedicines(response.data.near_expiry_medicines);
-    })
-    .catch(error => {
-      console.error('There was an error fetching the medicine status:', error);
-    });
-}, []);
+  const userRole = localStorage.getItem('userRole');
+  const loggedInAs = localStorage.getItem('loggedInAs');
 
-const togglePanel = () => {
+  useEffect(() => {
+    if (userRole === 'Doctor' && (loggedInAs === 'DoctorLogin' || loggedInAs === 'PharmacistLogin') || userRole === 'Pharmacist') {
+      axios.get('http://127.0.0.1:8000/check_medicine_status/')
+        .then(response => {
+          setLowQuantityMedicines(response.data.low_quantity_medicines);
+          setNearExpiryMedicines(response.data.near_expiry_medicines);
+        })
+        .catch(error => {
+          console.error('There was an error fetching the medicine status:', error);
+        });
+    }
+
+    if (userRole === 'Receptionist' || (userRole === 'Doctor' && loggedInAs === 'ReceptionistLogin')) {
+      axios.get('http://127.0.0.1:8000/check_upcoming_visits/')
+        .then(response => {
+          setUpcomingVisits(response.data.upcoming_visits);
+        })
+        .catch(error => {
+          console.error('There was an error fetching the upcoming visits:', error);
+        });
+    }
+  }, [userRole, loggedInAs]);
+
+  const togglePanel = () => {
     setPanelVisible(!panelVisible);
   };
 
-  const hasNotifications = lowQuantityMedicines.length > 0 || nearExpiryMedicines.length > 0;
+  const hasNotifications = lowQuantityMedicines.length > 0 || nearExpiryMedicines.length > 0 || upcomingVisits.length > 0;
 
   return (
     <div>
       <NotificationIcon onClick={togglePanel}>
         <FaRegBell />
-          {hasNotifications && <RedDot />}
+        {hasNotifications && <RedDot />}
       </NotificationIcon>
       <NotificationPanel visible={panelVisible}>
         <CloseIcon onClick={togglePanel}><IoMdClose /></CloseIcon>
         <h4 className="mb-3">Notifications</h4>
 
-        {lowQuantityMedicines.length > 0 && (
-          <Alert style={{ backgroundColor: "#F1F1F1", border: "#C7B7A3" }} className="mb-3">
-            <center><Alert.Heading style={{ color: "#B3A398", fontSize: "1.2rem", fontFamily: "cursive" }}>Low Stock Medicines</Alert.Heading></center>
-            <ul style={{ fontSize: "0.9rem", fontFamily: "initial", color: "#C7B7A3" }}>
-              {lowQuantityMedicines.map((medicine, index) => (
-                <li key={index}>
-                  {medicine.medicine_name} - Stock: {medicine.old_stock} - Expiry Date: {medicine.expiry_date}
-                </li>
-              ))}
-            </ul>
-          </Alert>
+        {(userRole === 'Pharmacist' || (userRole === 'Doctor' && loggedInAs === 'PharmacistLogin')) && (
+          <>
+            {lowQuantityMedicines.length > 0 && (
+              <Alert style={{ backgroundColor: "#F1F1F1", border: "#C7B7A3" }} className="mb-3">
+                <center><Alert.Heading style={{ color: "#B3A398", fontSize: "1.2rem", fontFamily: "cursive" }}>Low Stock Medicines</Alert.Heading></center>
+                <ul style={{ fontSize: "0.9rem", fontFamily: "initial", color: "#C7B7A3" }}>
+                  {lowQuantityMedicines.map((medicine, index) => (
+                    <li key={index}>
+                      {medicine.medicine_name} - Stock: {medicine.old_stock} - Expiry Date: {medicine.expiry_date}
+                    </li>
+                  ))}
+                </ul>
+              </Alert>
+            )}
+
+            {nearExpiryMedicines.length > 0 && (
+              <Alert style={{ backgroundColor: "#F1F1F1", border: "#C7B7A3" }}>
+                <center><Alert.Heading style={{ color: "#B3A398", fontSize: "1.2rem", fontFamily: "cursive" }}>Near Expiry Medicines</Alert.Heading></center>
+                <ul style={{ fontSize: "0.9rem", fontFamily: "initial", color: "#C7B7A3" }}>
+                  {nearExpiryMedicines.map((medicine, index) => (
+                    <li key={index}>
+                      {medicine.medicine_name} - Stock: {medicine.old_stock} - Expiry Date: {medicine.expiry_date}
+                    </li>
+                  ))}
+                </ul>
+              </Alert>
+            )}
+          </>
         )}
 
-        {nearExpiryMedicines.length > 0 && (
-          <Alert style={{ backgroundColor: "#F1F1F1", border: "#C7B7A3" }}>
-            <center><Alert.Heading style={{ color: "#B3A398", fontSize: "1.2rem", fontFamily: "cursive" }}>Near Expiry Medicines</Alert.Heading></center>
-            <ul style={{ fontSize: "0.9rem", fontFamily: "initial", color: "#C7B7A3" }}>
-              {nearExpiryMedicines.map((medicine, index) => (
-                <li key={index}>
-                  {medicine.medicine_name} - Stock: {medicine.old_stock} - Expiry Date: {medicine.expiry_date}
-                </li>
-              ))}
-            </ul>
-          </Alert>
+        {(userRole === 'Receptionist' || (userRole === 'Doctor' && loggedInAs === 'ReceptionistLogin')) && (
+          <>
+            {upcomingVisits.length > 0 && (
+              <Alert style={{ backgroundColor: "#F1F1F1", border: "#C7B7A3" }}>
+                <center><Alert.Heading style={{ color: "#B3A398", fontSize: "1.2rem", fontFamily: "cursive" }}>Upcoming Visits</Alert.Heading></center>
+                <ul style={{ fontSize: "0.9rem", fontFamily: "initial", color: "#C7B7A3" }}>
+                  {upcomingVisits.map((visit, index) => (
+                    <li key={index}>
+                      Patient: {visit.patientName} - Next Visit: {visit.nextVisit}
+                    </li>
+                  ))}
+                </ul>
+              </Alert>
+            )}
+          </>
         )}
       </NotificationPanel>
       <br />
@@ -72,19 +107,19 @@ const togglePanel = () => {
 
 const NotificationIcon = styled.div`
   position: fixed;
+  top: 10px;
   right: 60px;
-  font-size: 1rem;
   cursor: pointer;
   z-index: 1100;
 
   svg {
     font-size: 2rem;
-    color: grey;
+    color: white;
   }
 
   &:hover {
     svg {
-      color: black;
+      color: white;
     }
   }
 `;

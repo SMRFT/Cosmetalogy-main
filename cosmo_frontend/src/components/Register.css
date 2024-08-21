@@ -19,11 +19,11 @@
 }
 
 .Register-container{
-    background-image: url('./images/background-image.png');
+    background-image: url('./images/background.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    color: rgb(92, 116, 112);
+    color: #725F83;
     font-weight: bold;
 }
 

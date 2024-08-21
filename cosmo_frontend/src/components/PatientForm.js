@@ -27,6 +27,7 @@ const PatientForm = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [showModal, setShowModal] = useState(false); // State to control modal visibility
+  const [patientUID, setPatientUID] = useState(''); // State to store patientUID
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,6 +45,7 @@ const PatientForm = () => {
     axios.post('http://127.0.0.1:8000/Patients_data/', formData)
       .then(response => {
         setSuccessMessage('Patient Data Added Successfully');
+        setPatientUID(response.data.patientUID); // Set the patientUID
       })
       .catch(error => {
         if (error.response && error.response.data && error.response.data.mobileNumber) {
@@ -64,6 +66,7 @@ const PatientForm = () => {
       <LiaFileMedicalAltSolid />
       </VitalFormIcon>
       <br/>
+      
       <Form onSubmit={handleSubmit}>
         {/* Existing form fields */}
         <Row>
@@ -147,28 +150,37 @@ const PatientForm = () => {
         <Row>
           <Col>
             <Form.Group controlId="email">
-              <Form.Label>Email Address <span className="text-danger">*</span></Form.Label>
+              <Form.Label>Email</Form.Label>
               <Form.Control
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
                 className="custom-input"
               />
             </Form.Group>
           </Col>
           <Col>
             <Form.Group controlId="bloodGroup">
-              <Form.Label>Blood Group</Form.Label>
+              <Form.Label>Blood Group <span className="text-danger">*</span></Form.Label>
               <Form.Control
-                type="text"
+                as="select"
                 name="bloodGroup"
                 value={formData.bloodGroup}
                 onChange={handleChange}
                 required
                 className="custom-input"
-              />
+              >
+                <option value="">Select</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </Form.Control>
             </Form.Group>
           </Col>
         </Row>
@@ -178,24 +190,31 @@ const PatientForm = () => {
             <Form.Group controlId="language">
               <Form.Label>Language</Form.Label>
               <Form.Control
-                type="text"
+                as="select"
                 name="language"
                 value={formData.language}
                 onChange={handleChange}
-                required
                 className="custom-input"
-              />
+              >
+                <option value="">Select</option>
+                <option value="English">English</option>
+                <option value="English">Tamil</option>
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Chinese">Chinese</option>
+              </Form.Control>
             </Form.Group>
           </Col>
           <Col>
             <Form.Group controlId="purposeOfVisit">
-              <Form.Label>Purpose of Visit <span className="text-danger">*</span></Form.Label>
+              <Form.Label>Purpose of Visit</Form.Label>
               <Form.Control
                 type="text"
+                rows={2}
                 name="purposeOfVisit"
                 value={formData.purposeOfVisit}
                 onChange={handleChange}
-                required
                 className="custom-input"
               />
             </Form.Group>
@@ -208,31 +227,29 @@ const PatientForm = () => {
               <Form.Label>Address</Form.Label>
               <Form.Control
                 as="textarea"
+                rows={2}
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                required
                 className="custom-input"
               />
             </Form.Group>
           </Col>
         </Row>
         <br />
-        <Row>
-          <Col>
-            <button type="submit" className="custom-button">Submit</button>
-          </Col>
-        </Row>
         {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
         {successMessage && <Alert variant="success">{successMessage}</Alert>}
+        <button type="submit">
+          Submit
+        </button>
       </Form>
-      {/* Modal for VitalForm */}
-      <Modal show={showModal} onHide={handleModalClose}>
+
+      <Modal show={showModal} onHide={handleModalClose} className="modal-width">
         <Modal.Header closeButton>
           <Modal.Title>Vital Form</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <VitalForm patientName={formData.patientName} mobileNumber={formData.mobileNumber} />
+          <VitalForm patientUID={patientUID} patientName={formData.patientName} mobileNumber={formData.mobileNumber} />
         </Modal.Body>
       </Modal>
     </Container>
@@ -246,5 +263,10 @@ const VitalFormIcon = styled.div`
   cursor: pointer;
   font-size: 2.5rem;
   color: black;
-`
+
+  &:hover {
+    color: #0056b3;
+  }
+`;
+
 export default PatientForm;
