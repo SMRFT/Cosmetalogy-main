@@ -8,8 +8,10 @@ import { format } from 'date-fns';
 import { IoMdArrowRoundBack } from "react-icons/io";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import PDFHeader from './images/PDF_Header.png';
+import PDFFooter from './images/PDF_Footer.png';
 const StyledContainer = styled.div`
   padding: 10px;
   max-width: 90%;
@@ -179,6 +181,7 @@ const Bill = () => {
   const [quantity, setQuantity] = useState({});
   const [discount, setDiscount] = useState(0); // Initial discount percentage
   const [netAmount, setNetAmount] = useState('');
+  const [netAmount1, setNetAmount1] = useState('');
   const [hasData, setHasData] = useState(true);
 
   useEffect(() => {
@@ -336,24 +339,34 @@ const Bill = () => {
   
     let total = 0;
   
-    billingData
-      .filter((item) => item.patientUID === selectedPatient.patientUID)
-      .forEach((item, itemIndex) => {
-        const prescriptions = extractPrescriptionDetails(item.prescription);
-        prescriptions.forEach((prescription, prescriptionIndex) => {
+    // Filter billing data for the selected patient
+    const patientBillingData = billingData.filter((item) => item.patientUID === selectedPatient.patientUID);
+  
+    patientBillingData.forEach((item, itemIndex) => {
+      const prescriptions = extractPrescriptionDetails(item.prescription);
+  
+      prescriptions.forEach((prescription, prescriptionIndex) => {
+        const key = `${itemIndex}-${prescriptionIndex}`;
+        // Check if the prescription is selected
+        if (selectedPrescriptions[key]) {
           const { particulars } = prescription;
-          const qty = quantity[`${itemIndex}-${prescriptionIndex}`] !== undefined ? quantity[`${itemIndex}-${prescriptionIndex}`] : prescription.totalDosage;
+          const qty = quantity[key] !== undefined ? quantity[key] : prescription.totalDosage;
           const medicineDetail = medicineDetails[particulars] || {};
           const { price } = medicineDetail || {};
   
+          // Calculate total for the selected medicine
           const totalForMedicine = calculateTotal(price, qty);
           total += parseFloat(totalForMedicine) || 0;
-        });
+        }
       });
+    });
   
+    // Apply discount to the total amount
+    applyDiscount(total);
     setNetAmount(total.toFixed(2));
   };
   
+
 
 // Function to update stock based on selected prescriptions
 const updateStock = async () => {
@@ -420,10 +433,6 @@ const applyDiscount = () => {
   }
 };
 const handleSaveData = async () => {
-  // Ensure discount and netAmount are calculated before this function runs
-  applyDiscount();
-
-  // Initialize variables to track errors
   let hasInvalidQuantity = false;
   let errorMessages = [];
 
@@ -478,15 +487,28 @@ const handleSaveData = async () => {
     return;
   }
 
+  // Calculate the net amount before applying the discount
+  let calculatedNetAmount = 0;
+  table_data.forEach((item) => {
+    calculatedNetAmount += parseFloat(item.total) || 0;
+  });
+
+  // Apply discount after calculating the net amount
+  const discountAmount = (calculatedNetAmount * discount) / 100;
+  const discountedNetAmount = calculatedNetAmount - discountAmount;
+  
+  // Set the net amount to the discounted value
+  setNetAmount(discountedNetAmount.toFixed(2));
+
   const dataToSubmit = {
     patientName: selectedPatient.patientName,
     patientUID: selectedPatient.patientUID,
     appointmentDate: format(startDate, 'yyyy-MM-dd'),
     table_data: table_data,
-    netAmount: netAmount,  // Ensure this is not empty
+    netAmount: discountedNetAmount.toFixed(2),  // Store the discounted net amount
     discount: `${discount}%`, // Append '%' symbol when saving
   };
-
+ 
   try {
     const response = await fetch('http://127.0.0.1:8000/save/billing/data/', {
       method: 'POST',
@@ -520,71 +542,146 @@ const handleSaveData = async () => {
 };
 
 
+// const patientUID = selectedPatient.patientUID
+// console.log('patientUID',patientUID)
+// const fetchPatientDetails = (patientUID) => {
+//  axios.get(`http://127.0.0.1:8000/patients/${patientUID}/`)
+//      .then(response => {
+//          setSelectedPatient(response.data);
+//      })
+//      .catch(error => {
+//          console.error('There was an error fetching the patient details!', error);
+//      });
+// };
+
+// // Example usage: Fetch details for a specific patient UID
+// useEffect(() => {
+//  if (patientUID) {
+//      fetchPatientDetails(patientUID);
+//  }
+// }, [patientUID]);
+
+const convertToBase64 = (url, callback) => {
+  const img = new Image();
+  img.crossOrigin = 'Anonymous';
+  img.src = url;
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const dataURL = canvas.toDataURL('image/png');
+    callback(dataURL);
+  };
+  img.onerror = error => console.error('Error converting image to Base64:', error);
+};
+
 const handleDownload = () => {
   if (!selectedPatient || !billingData.length) {
     console.error('No patient selected or billing data is empty');
     return;
   }
 
-  // Create a new PDF document
-  const doc = new jsPDF();
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const headerFooterHeight = 35;
 
-  // Add title
-  doc.setFontSize(18);
-  doc.text('Bill', 100, 22);
+  convertToBase64(PDFHeader, headerImage => {
+    convertToBase64(PDFFooter, footerImage => {
+      doc.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerFooterHeight);
 
-  // Add patient details in separate rows
-  doc.setFontSize(12);
-  doc.text('Patient Details:', 14, 30); // Title for the patient details section
-  doc.text(`Patient Name: ${selectedPatient.patientName}`, 14, 40);
-  doc.text(`Patient UID: ${selectedPatient.patientUID}`, 14, 46);
+      let startY = headerFooterHeight + 20;
 
-  // Filter data for the selected patient and selected prescriptions
-  const patientBillingData = billingData.filter(item => item.patientUID === selectedPatient.patientUID);
+      // Add title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Pharmacy Bill', pageWidth / 2, startY, { align: 'center' });
+      startY += 15;
 
-  // Prepare table data for the selected prescriptions only
-  const procedureTable = patientBillingData.flatMap((item, itemIndex) => {
-    const prescriptions = extractPrescriptionDetails(item.prescription);
-    return prescriptions.map((prescription, prescriptionIndex) => {
-      const key = `${itemIndex}-${prescriptionIndex}`;
-      if (!selectedPrescriptions[key]) return null; // Only include selected prescriptions
+      // Add background color to patient info box
+      doc.setFillColor(240, 240, 240); // Light grey color
+      doc.rect(14, startY, pageWidth - 28, 30, 'F'); // Adjust height to include sex and age
 
-      const qty = quantity[key] !== undefined ? quantity[key] : prescription.totalDosage;
-      const medicineDetail = medicineDetails[prescription.particulars] || {};
-      const { price, CGST_percentage, CGST_value, SGST_percentage, SGST_value, batch_number } = medicineDetail;
-      return [
-        prescription.particulars || 'N/A',
-        qty || 'N/A',
-        price || 'N/A',
-        CGST_percentage || 'N/A',
-        CGST_value || 'N/A',
-        SGST_percentage || 'N/A',
-        SGST_value || 'N/A',
-        batch_number || 'N/A',
-        calculateTotal(price, qty) || 'N/A',
-      ];
-    }).filter(Boolean); // Filter out null values
-  });
+      // Add border around the information
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+      doc.rect(14, startY, pageWidth - 28, 30);
 
-  // Add procedure details table
-  if (procedureTable.length > 0) {
-    doc.autoTable({
-      head: [['Particulars', 'Qty', 'Price', 'CGST (%)', 'CGST Value', 'SGST (%)', 'SGST Value', 'Batch No.', 'Total']],
-      body: procedureTable,
-      startY: 52, // Adjust starting Y position based on patient details
+      startY += 8;  // Adjust top padding inside the rectangle
+
+      // Left alignment for Name, Age, and Sex
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Name: ${selectedPatient.patientName}`, 16, startY);
+      doc.text(`Age: ${selectedPatient.age || 'N/A'}`, 16, startY + 6);
+      doc.text(`Sex: ${selectedPatient.sex || 'N/A'}`, 16, startY + 12);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 16, startY + 18);
+
+      // Right alignment for GST Number and Time
+      doc.text('GST Number: 33ASIPV0408M1ZJ', pageWidth - 16, startY, { align: 'right' });
+      doc.text(`Time: ${new Date().toLocaleTimeString()}`, pageWidth - 16, startY + 6, { align: 'right' });
+
+      // Center alignment for Patient UID
+      doc.text(`Patient UID: ${selectedPatient.patientUID}`, pageWidth / 2, startY, { align: 'center' });
+
+      startY += 35; // Space after the details section
+
+      // Filter data for the selected patient and selected prescriptions
+      const patientBillingData = billingData.filter(item => item.patientUID === selectedPatient.patientUID);
+
+      // Prepare table data for the selected prescriptions
+      const procedureTable = patientBillingData.flatMap((item, itemIndex) => {
+        const prescriptions = extractPrescriptionDetails(item.prescription);
+        return prescriptions.map((prescription, prescriptionIndex) => {
+          const key = `${itemIndex}-${prescriptionIndex}`;
+          if (!selectedPrescriptions[key]) return null;
+
+          const qty = quantity[key] !== undefined ? quantity[key] : prescription.totalDosage;
+          const medicineDetail = medicineDetails[prescription.particulars] || {};
+          const { price, CGST_percentage, CGST_value, SGST_percentage, SGST_value, batch_number } = medicineDetail;
+          return [
+            prescription.particulars || 'N/A',
+            qty || 'N/A',
+            price || 'N/A',
+            CGST_percentage || 'N/A',
+            CGST_value || 'N/A',
+            SGST_percentage || 'N/A',
+            SGST_value || 'N/A',
+            batch_number || 'N/A',
+            calculateTotal(price, qty) || 'N/A',
+          ];
+        }).filter(Boolean);
+      });
+
+      // Add procedure details table
+      if (procedureTable.length > 0) {
+        doc.autoTable({
+          head: [['Particulars', 'Qty', 'Price', 'CGST (%)', 'CGST Value', 'SGST (%)', 'SGST Value', 'Batch No.', 'Total']],
+          body: procedureTable,
+          startY: startY,
+        });
+      } else {
+        doc.text('No data available to display', 14, startY);
+      }
+
+      // Add net amount
+      const yOffset = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      doc.text(`Net Amount: ${netAmount || 'N/A'}`, 14, yOffset);
+
+      // Add the footer
+      doc.addImage(footerImage, 'PNG', 0, pageHeight - headerFooterHeight, pageWidth, headerFooterHeight);
+
+      // Save the PDF
+      doc.save(`${selectedPatient.patientName}_Bill.pdf`);
     });
-  } else {
-    doc.text('No data available to display', 14, 52);
-  }
-
-  // Add net amount
-  const yOffset = doc.lastAutoTable.finalY + 10; // Adjust offset if needed
-  doc.setFontSize(12);
-  doc.text(`Net Amount: ${netAmount || 'N/A'}`, 14, yOffset);
-
-   // Save the PDF
-   doc.save(`${selectedPatient.patientName}_Bill.pdf`);
+  });
 };
+
+
+
 
   return (
     <Container>
@@ -716,11 +813,12 @@ const handleDownload = () => {
       {selectedPatient && (
       <FlexRow>
       <DiscountContainer>
-        <DiscountLabel htmlFor="discount">Discount:</DiscountLabel>
+        <DiscountLabel htmlFor="discount">Discount %:</DiscountLabel>
         <DiscountInput
           type="text"
           id="discount"
           value={discount}
+          placeholder="Discount %"
           onChange={(e) => setDiscount(e.target.value)}
         />
         <button onClick={applyDiscount}>Apply</button>

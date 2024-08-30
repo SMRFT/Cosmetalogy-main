@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import registration,login,pharmacy_data,check_medicine_status,pharmacy_upload,delete_medicine,check_upcoming_visits,PatientDetailsView,save_billing_data,upload_file,get_file,update_stock,delete_billing_data,Complaints_list,Findings_list,Tests_list,Procedure_list,diagnosis_list
-from .views import Patients_data,PatientView,Appointmentpost,AppointmentView,SummaryDetailCreate,vitalform,get_medicine_price,get_summary_by_interval,get_billing_by_interval,get_procedurebilling_by_interval,medical_history,update_billing_data,post_procedures_bill,get_procedures_bill
+from .views import get_pdf_file, upload_pdf,Patients_data,PatientView,Appointmentpost,AppointmentView,SummaryDetailCreate,vitalform,get_medicine_price,get_summary_by_interval,get_billing_by_interval,get_procedurebilling_by_interval,medical_history,update_billing_data,post_procedures_bill,get_procedures_bill
 
 urlpatterns = [
     path('registration/', registration, name='registration'),
@@ -35,4 +35,8 @@ urlpatterns = [
     path('get_patient_details/', medical_history, name='MedicalHistory'),
     path('upload_file/', upload_file, name='upload_file'),
     path('get_file/', get_file, name='get_file'),
+    path('upload_pdf/', upload_pdf, name='upload_pdf'),
+    path('get_pdf_file/', get_pdf_file, name='get_pdf_file'),
+
+
 ]

@@ -51,6 +51,18 @@ const ImageCell = styled.td`
     border: 1px solid #ddd;
 `;
 
+export const PdfCell = styled.td`
+  padding: 10px;
+  background-color: #f0f0f0; // Light background for the PDF section
+  border-radius: 5px;
+  a {
+    color: #007bff;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
 
 const PatientInfo = styled.div`
     display: flex;
@@ -286,28 +298,60 @@ const MedicalHistory = () => {
                 try {
                     const response = await axios.post('http://127.0.0.1:8000/get_patient_details/', { patientUID });
                     setPatientDetails(response.data);
-                    const images = await Promise.all(response.data.map(async (detail) => {
+    
+                    const imagesAndPdfs = await Promise.all(response.data.map(async (detail) => {
                         const dateStr = new Date(detail.appointmentDate).toISOString().split('T')[0];
+                        
+                        // Fetch images
                         const imageArray = [];
                         for (let i = 0; i <= 5; i++) {
-                            const filename = `${detail.patientName}_${detail.patientUID}_${dateStr}.jpg`;
+                            const imageFilename = `${detail.patientName}_${detail.patientUID}_${dateStr}_${i}.jpg`;
                             try {
-                                const imageResponse = await axios.get(`http://127.0.0.1:8000/get_file/?filename=${filename}`, {
+                                const imageResponse = await axios.get(`http://127.0.0.1:8000/get_file/?filename=${imageFilename}`, {
                                     responseType: 'blob',
                                 });
-                                imageArray.push(URL.createObjectURL(imageResponse.data));
+                                imageArray.push({
+                                    src: URL.createObjectURL(imageResponse.data),
+                                    filename: imageFilename
+                                });
                             } catch (error) {
-                                
                                 console.error(`Error fetching image ${i}:`, error);
                             }
                         }
-                        return { appointmentDate: detail.appointmentDate, images: imageArray };
+    
+                        // Fetch PDFs
+                        const pdfArray = [];
+                        for (let j = 0; j <= 2; j++) {  // Adjust index range as needed
+                            const pdfFilename = `${detail.patientName}_${detail.patientUID}_${dateStr}_${j}.pdf`;
+                            try {
+                                const pdfResponse = await axios.get(`http://127.0.0.1:8000/get_pdf_file/?filename=${pdfFilename}`, {
+                                    responseType: 'blob',
+                                });
+                                pdfArray.push({
+                                    src: URL.createObjectURL(pdfResponse.data),
+                                    filename: pdfFilename
+                                });
+                            } catch (error) {
+                                console.error(`Error fetching PDF ${j}:`, error);
+                            }
+                        }
+    
+                        return { 
+                            appointmentDate: detail.appointmentDate, 
+                            images: imageArray, 
+                            pdfs: pdfArray 
+                        };
                     }));
-                    const groupedImages = images.reduce((acc, { appointmentDate, images }) => {
-                        acc[appointmentDate] = (acc[appointmentDate] || []).concat(images);
+    
+                    // Group images and PDFs by appointment date
+                    const groupedFiles = imagesAndPdfs.reduce((acc, { appointmentDate, images, pdfs }) => {
+                        acc[appointmentDate] = acc[appointmentDate] || { images: [], pdfs: [] };
+                        acc[appointmentDate].images = acc[appointmentDate].images.concat(images);
+                        acc[appointmentDate].pdfs = acc[appointmentDate].pdfs.concat(pdfs);
                         return acc;
                     }, {});
-                    setImageSrcs(groupedImages);
+    
+                    setImageSrcs(groupedFiles);
                 } catch (error) {
                     console.error('Error fetching patient details:', error);
                 }
@@ -315,6 +359,9 @@ const MedicalHistory = () => {
             handleFetchDetails();
         }
     }, [patientUID]);
+    
+    
+    
 
     const handleAppointmentClick = (appointment) => {
         setSelectedAppointment(appointment);
@@ -459,15 +506,34 @@ const MedicalHistory = () => {
                         </ProceduresContainer>
                         <Section>
                         {imageSrcs[selectedAppointment.appointmentDate] && (
-                            <tr>
-                                <SectionTitle>Records & Images</SectionTitle>
-                                <ImageCell>
-                                    {imageSrcs[selectedAppointment.appointmentDate].map((src, imgIndex) => (
-                                        <img key={imgIndex} src={src} alt={`Patient image ${imgIndex + 1}`} style={{ width: '100px' }} />
-                                    ))}
-                                </ImageCell>
-                            </tr>
-                        )}
+    <tr>
+        <SectionTitle>Records & Images</SectionTitle>
+        <ImageCell>
+            {imageSrcs[selectedAppointment.appointmentDate].images.map((src, imgIndex) => (
+                <img key={imgIndex} src={src} alt={`Patient image ${imgIndex + 1}`} style={{ width: '100px' }} />
+            ))}
+        </ImageCell>
+    </tr>
+)}
+
+{imageSrcs[selectedAppointment.appointmentDate] && imageSrcs[selectedAppointment.appointmentDate].pdfs.length > 0 && (
+    <tr>
+        <SectionTitle>PDF Documents</SectionTitle>
+        <PdfCell>
+            {imageSrcs[selectedAppointment.appointmentDate].pdfs.map((pdfSrc, pdfIndex) => (
+                <a 
+                    key={pdfIndex} 
+                    href={pdfSrc} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    style={{ display: 'block', margin: '10px 0' }}>
+                    View PDF {pdfIndex + 1}
+                </a>
+            ))}
+        </PdfCell>
+    </tr>
+)}
+
                         </Section>
 
                         <Section>

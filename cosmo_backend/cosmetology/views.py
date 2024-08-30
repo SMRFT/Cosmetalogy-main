@@ -351,8 +351,8 @@ def get_summary_by_interval(request, interval):
 
 
 from .models import BillingData
+
 @api_view(['GET'])
-@csrf_exempt
 def get_billing_by_interval(request, interval):
     date_str = request.GET.get('appointmentDate')
     if date_str is None:
@@ -363,9 +363,9 @@ def get_billing_by_interval(request, interval):
     except ValueError:
         return JsonResponse({'error': 'Invalid date format. Expected YYYY-MM-DD'}, status=400)
 
-    if interval == 'day':
+    if interval == 'date':
         start_date = selected_date
-        end_date = selected_date
+        end_date = start_date  # Start of the next day
     elif interval == 'week':
         start_date = selected_date
         end_date = start_date + timedelta(days=6)
@@ -376,9 +376,38 @@ def get_billing_by_interval(request, interval):
     else:
         return JsonResponse({'error': 'Invalid interval'}, status=400)
 
+    # Set end_date to the last moment of the interval
+    end_date = datetime.combine(end_date, datetime.max.time())
+
+    # Adjust start_date to the start of the day
+    start_date = datetime.combine(start_date, datetime.min.time())
+
+    # Format dates to only include date part
+    formatted_start_date = start_date.strftime('%Y-%m-%d')
+    formatted_end_date = end_date.strftime('%Y-%m-%d')
+
+    print(f"Start date: {formatted_start_date}")
+    print(f"End date: {formatted_end_date}")
+
+    # Filter records from start_date to end_date, inclusive of end_date
     billing = BillingData.objects.filter(appointmentDate__gte=start_date, appointmentDate__lte=end_date)
+    
+    print(f"Number of records found: {billing.count()}")
+
+    # Ensure table_data is processed correctly
+    for record in billing:
+        if isinstance(record.table_data, str):
+            try:
+                record.table_data = json.loads(record.table_data)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Error decoding table_data JSON'}, status=500)
+
     serializer = BillingDataSerializer(billing, many=True)
-    return JsonResponse(serializer.data, safe=False)
+    return JsonResponse({'billing_data': serializer.data}, safe=False)
+
+
+
+
 
 
 @api_view(['GET'])
@@ -540,19 +569,23 @@ def save_billing_data(request):
             data = json.loads(request.body)
             patientUID = data.get('patientUID')
             patientName = data.get('patientName')
-            date = data.get('appointmentDate')  # Use .get() to avoid KeyError
-            table_data = data.get('table_data')  # No need to use json.loads() here
+            date = data.get('appointmentDate')
+            table_data = data.get('table_data')  # Ensure this is a valid JSON object
             netAmount = data.get('netAmount')
-            discount= data.get('discount')
+            discount = data.get('discount')
+            
             if not date:
                 return JsonResponse({'error': 'Date is required.'}, status=400)
-            # Log received data
-            print('Received data:', data)
+            
+            # Validate table_data as a JSON object
+            if isinstance(table_data, str):
+                table_data = json.loads(table_data)
+            
             billing_data = BillingData(
                 patientUID=patientUID,
                 patientName=patientName,
                 appointmentDate=date,
-                table_data=table_data,
+                table_data=table_data,  # Store as JSON object, not string
                 netAmount=netAmount,
                 discount=discount,
             )
@@ -561,6 +594,7 @@ def save_billing_data(request):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
 
 
 @api_view(['PUT'])
@@ -747,4 +781,60 @@ def get_file(request):
         return response
     else:
         # Return a 404 error if the file is not found
+        return HttpResponse(status=404)
+    
+
+client = MongoClient('mongodb+srv://smrftcosmo:smrft%402024@cluster0.lctyiq9.mongodb.net/your_database_name?retryWrites=true&w=majority')
+db = client['cosmetology']
+fs = GridFS(db)
+
+@csrf_exempt
+def upload_pdf(request):
+    if request.method == 'POST':
+        patient_name = request.POST.get('patient_name')
+        if 'pdf_files' in request.FILES:
+            pdf_files = request.FILES.getlist('pdf_files')
+            for index, pdf_file in enumerate(pdf_files):
+                pdf_filename = f'{patient_name}_{index}.pdf'
+                pdf_id = fs.put(pdf_file, filename=pdf_filename)
+                # You can store additional details in a separate collection if needed:
+                # db.fs.files.insert_one({
+                #     'pdf_id': str(pdf_id),
+                #     'patient_name': patient_name,
+                #     'file_name': pdf_filename,
+                # })
+            return HttpResponse('PDFs uploaded successfully')
+        return HttpResponseBadRequest('No PDF files provided')
+    return HttpResponseBadRequest('Invalid request method')
+
+
+@csrf_exempt
+def get_pdf_file(request):
+    """
+    View to retrieve a PDF file from MongoDB GridFS.
+    This view handles GET requests to retrieve a PDF file from MongoDB GridFS based on the provided filename.
+    Args:
+        request (HttpRequest): The HTTP request object containing the filename to retrieve.
+    Returns:
+        HttpResponse: An HTTP response containing the PDF file contents or a 404 error if the file is not found.
+    """
+    # Connect to MongoDB
+    client = MongoClient('mongodb+srv://smrftcosmo:smrft%402024@cluster0.lctyiq9.mongodb.net/your_database_name?retryWrites=true&w=majority')
+    db = client['cosmetology']
+    fs = GridFS(db)
+
+    # Get the filename from the request parameters
+    filename = request.GET.get('filename')
+
+    # Find the PDF file in MongoDB GridFS
+    file = fs.find_one({"filename": filename})
+
+    if file is not None:
+        # Return the PDF file contents as an HTTP response
+        response = HttpResponse(file.read())
+        response['Content-Type'] = 'application/pdf'
+        response['Content-Disposition'] = 'attachment; filename=%s' % file.filename
+        return response
+    else:
+        # Return a 404 error if the PDF file is not found
         return HttpResponse(status=404)

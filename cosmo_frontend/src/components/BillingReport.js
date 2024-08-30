@@ -34,7 +34,7 @@ const BillingReport = () => {
 
   const getReportHeading = (interval) => {
     switch (interval) {
-      case 'day':
+      case 'date':
         return 'Daily Report';
       case 'week':
         return 'Weekly Report';
@@ -54,7 +54,7 @@ const BillingReport = () => {
 
   const fetchData = async (interval) => {
     let dateParam = '';
-    if (interval === 'day') {
+    if (interval === 'date') {
       dateParam = format(selectedDate, 'yyyy-MM-dd');
     } else if (interval === 'week' && selectedWeek) {
       dateParam = format(selectedWeek, 'yyyy-MM-dd');
@@ -233,8 +233,8 @@ const saveChanges = async (patientUID, appointmentDate) => {
         <ButtonGroup>
           <IntervalButton
             title='Daily Report'
-            onClick={() => handleIntervalChange('day')}
-            className={selectedInterval === 'day' ? 'active' : ''}
+            onClick={() => handleIntervalChange('date')}
+            className={selectedInterval === 'date' ? 'active' : ''}
           >
             <FontAwesomeIcon icon={faCalendarDay} />
           </IntervalButton>
@@ -254,7 +254,7 @@ const saveChanges = async (patientUID, appointmentDate) => {
           </IntervalButton>
         </ButtonGroup>
         <DatePickerWrapper>
-          {selectedInterval === 'day' && (
+          {selectedInterval === 'date' && (
             <DatePicker
               selected={selectedDate}
               onChange={handleDateChange}
@@ -320,115 +320,128 @@ const saveChanges = async (patientUID, appointmentDate) => {
                 </tr>
               </MDBTableHead>
               <MDBTableBody>
-          {billingData && billingData.length > 0 ? (
-            billingData.map((item, index) => (
-              <React.Fragment key={item.patientUID}>
-                {item.table_data.map((data, dataIndex) => (
-                  <tr key={`${item.patientUID}-${dataIndex}`}>
-                    {dataIndex === 0 && (
-                      <td rowSpan={item.table_data.length}>
-                        {formatText(item.patientName)}
-                      </td>
-                    )}
-                    <td>
-                      {isEditing && editableData[item.patientUID] ? (
-                        <select
-                          value={editableData[item.patientUID][dataIndex]?.particulars || ''}
-                          onChange={(e) =>
-                            handleDataChange(item.patientUID, dataIndex, 'particulars', e.target.value)
-                          }
-                        >
-                          {medicineOptions.map((medicine) => (
-                            <option key={medicine.id} value={medicine.medicine_name}>
-                              {medicine.medicine_name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        data.particulars
-                      )}
-                    </td>
-                    <td>
-                      {isEditing && editableData[item.patientUID] ? (
-                        <input
-                          type="number"
-                          value={editableData[item.patientUID][dataIndex]?.qty || ''}
-                          onChange={(e) =>
-                            handleDataChange(item.patientUID, dataIndex, 'qty', e.target.value)
-                          }
-                        />
-                      ) : (
-                        data.qty
-                      )}
-                    </td>
-                    <td>
-                      {isEditing && editableData[item.patientUID] ? (
-                        <input
-                          type="number"
-                          value={editableData[item.patientUID][dataIndex]?.price || ''}
-                          onChange={(e) =>
-                            handleDataChange(item.patientUID, dataIndex, 'price', e.target.value)
-                          }
-                        />
-                      ) : (
-                        data.price
-                      )}
-                    </td>
-                    <td>
-                      {isEditing && editableData[item.patientUID] ? (
-                        <input
-                          type="number"
-                          value={editableData[item.patientUID][dataIndex]?.gst || ''}
-                          onChange={(e) =>
-                            handleDataChange(item.patientUID, dataIndex, 'gst', e.target.value)
-                          }
-                        />
-                      ) : (
-                        data.gst
-                      )}
-                    </td>
-                    <td>
-                      {isEditing && editableData[item.patientUID] ? (
-                        <input
-                          type="number"
-                          value={editableData[item.patientUID][dataIndex]?.total || ''}
-                          onChange={(e) =>
-                            handleDataChange(item.patientUID, dataIndex, 'total', e.target.value)
-                          }
-                        />
-                      ) : (
-                        data.total
-                      )}
-                    </td>
-                    {dataIndex === 0 && (
-                            <td rowSpan={item.table_data.length}>
-                            {isEditing ? (
-                                <button onClick={() => saveChanges(item.patientUID, item.appointmentDate)}>Save</button>
-                            ) : (
-                                <button onClick={() => toggleEditMode()}>Edit</button>
-                            )}
-                      </td>
-                    )}
-                    {dataIndex === 0 && (
-                      <td rowSpan={item.table_data.length}>
-                        <FaTrash
-                          onClick={() => handleDelete(item.patientUID, item.appointmentDate)}
-                          style={{ cursor: 'pointer', color: '#E26868' }}
-                        />
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </React.Fragment>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="8" className="text-center">
-                No data available
+  {billingData && billingData.length > 0 ? (
+    billingData.map((item, index) => (
+      <React.Fragment key={item.patientUID}>
+        {item.table_data && item.table_data.length > 0 ? (
+          item.table_data.map((data, dataIndex) => (
+            <tr key={`${item.patientUID}-${dataIndex}`}>
+              {dataIndex === 0 && (
+                <td rowSpan={item.table_data.length}>
+                  {formatText(item.patientName)}
+                </td>
+              )}
+              <td>
+                {isEditing && editableData[item.patientUID] ? (
+                  <select
+                    value={editableData[item.patientUID][dataIndex]?.particulars || ''}
+                    onChange={(e) =>
+                      handleDataChange(item.patientUID, dataIndex, 'particulars', e.target.value)
+                    }
+                  >
+                    {medicineOptions.map((medicine) => (
+                      <option key={medicine.id} value={medicine.medicine_name}>
+                        {medicine.medicine_name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  data.particulars
+                )}
               </td>
+              <td>
+                {isEditing && editableData[item.patientUID] ? (
+                  <input
+                    type="number"
+                    value={editableData[item.patientUID][dataIndex]?.qty || ''}
+                    onChange={(e) =>
+                      handleDataChange(item.patientUID, dataIndex, 'qty', e.target.value)
+                    }
+                  />
+                ) : (
+                  data.qty
+                )}
+              </td>
+              <td>
+                {isEditing && editableData[item.patientUID] ? (
+                  <input
+                    type="number"
+                    value={editableData[item.patientUID][dataIndex]?.price || ''}
+                    onChange={(e) =>
+                      handleDataChange(item.patientUID, dataIndex, 'price', e.target.value)
+                    }
+                  />
+                ) : (
+                  data.price
+                )}
+              </td>
+              <td>
+                {isEditing && editableData[item.patientUID] ? (
+                  <input
+                    type="number"
+                    value={editableData[item.patientUID][dataIndex]?.gst || ''}
+                    onChange={(e) =>
+                      handleDataChange(item.patientUID, dataIndex, 'gst', e.target.value)
+                    }
+                  />
+                ) : (
+                  `${data.CGST_percentage}/${data.SGST_percentage}`
+                )}
+              </td>
+              <td>
+                {isEditing && editableData[item.patientUID] ? (
+                  <input
+                    type="number"
+                    value={editableData[item.patientUID][dataIndex]?.total || ''}
+                    onChange={(e) =>
+                      handleDataChange(item.patientUID, dataIndex, 'total', e.target.value)
+                    }
+                  />
+                ) : (
+                  data.total
+                )}
+              </td>
+              {dataIndex === 0 && (
+                <td rowSpan={item.table_data.length}>
+                  {isEditing ? (
+                    <button onClick={() => saveChanges(item.patientUID, item.appointmentDate)}>
+                      Save
+                    </button>
+                  ) : (
+                    <button onClick={() => toggleEditMode(item.patientUID)}>
+                      Edit
+                    </button>
+                  )}
+                </td>
+              )}
+              {dataIndex === 0 && (
+                <td rowSpan={item.table_data.length}>
+                  <FaTrash
+                    onClick={() => handleDelete(item.patientUID, item.appointmentDate)}
+                    style={{ cursor: 'pointer', color: '#E26868' }}
+                  />
+                </td>
+              )}
             </tr>
-          )}
-        </MDBTableBody>
+          ))
+        ) : (
+          <tr>
+            <td colSpan="8" className="text-center">
+              No table data available
+            </td>
+          </tr>
+        )}
+      </React.Fragment>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="8" className="text-center">
+        No data available
+      </td>
+    </tr>
+  )}
+</MDBTableBody>
+
             </table>
           </Summary>
         ) : (

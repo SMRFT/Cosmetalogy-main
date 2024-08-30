@@ -8,7 +8,7 @@ import 'react-bootstrap-typeahead/css/Typeahead.css';
 import male from './images/male.png';        
 import female from './images/female.png';
 import { BsPatchPlusFill} from "react-icons/bs";
-import { BiImageAdd } from "react-icons/bi";
+import { BiImageAdd, BiTrash } from "react-icons/bi";
 import { MdDelete } from "react-icons/md";
 import axios from 'axios';
 import { FaCalendarAlt } from 'react-icons/fa';
@@ -189,7 +189,40 @@ export const UploadedImage = styled.img`
   margin: 5px;
   object-fit: cover;
 `;
+export const PdfContainer = styled.section`
+  flex: 1;
+  margin-right: 10px;
+  padding: 20px;
+  background-color: #c8d6e5; // Light blue background
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+`;
 
+export const PdfItem = styled.div`
+  margin: 10px;
+  padding: 10px;
+  background-color: #ffffff; // White background for individual PDF items
+  border: 1px solid #cccccc; // Light gray border
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+export const RemoveButton = styled.button`
+  background-color: #ff6b6b; // Red background
+  color: #ffffff; // White text
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: #ee5253; // Darker red on hover
+  }
+`;
 export const SectionTitle2 = styled.h4`
   margin-top: 20px;
   margin-bottom: 10px;
@@ -270,46 +303,86 @@ const PrescriptionDetails = () => {
   const [prescriptionInputs, setPrescriptionInputs] = useState([
     { selectedPrescription: [], dosage: '', durationNumber: '', duration: '', m: false, a: false, e: false, n: false }
   ]);
-  const handleSelectDiagnosis = (diagnosis) => {
-    setSelectedDiagnosis(diagnosis);
-  };
-  const handleSelectcomplaints = (complaints) => {
-    setSelectedComplaints(complaints);
-  };
-  const handleSelectfindings = (findings) => {
-    setSelectedFindings(findings);
-  };
-  const handleSelectprocedure = (procedure) => {
-    setSelectedprocedure(procedure);
-  };
-  
-  const handleSelectTests = (tests) => {
-    setSelectedTests(tests);
-  };
-  
-  const [planDetails, setPlanDetails] = useState({
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [selectedTests, setSelectedTests] = useState([]);
+   const [selectedDate, setSelectedDate] = useState(null);
+   const [planDetails, setPlanDetails] = useState({
     plan1: '',
     plan2: '',
     plan3: ''
   });
+  useEffect(() => {
+    const savedState = JSON.parse(localStorage.getItem('prescriptionDetailsState'));
+    if (savedState) {
+      setPatientData(savedState.patientData);
+      setSelectedDiagnosis(savedState.selectedDiagnosis || []);
+      setSelectedComplaints(savedState.selectedComplaints || []);
+      setSelectedFindings(savedState.selectedFindings || []);
+      setSelectedprocedure(savedState.selectedProcedure || []);
+      setPrescriptionInputs(savedState.prescriptionInputs || []);
+      setPlanDetails(savedState.planDetails || { plan1: '', plan2: '', plan3: '' });
+      setUploadedImages(savedState.uploadedImages || []);
+      setSelectedTests(savedState.selectedTests || []);
+      setSelectedDate(savedState.selectedDate || null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const stateToSave = {
+      patientData,
+      selectedDiagnosis,
+      selectedcomplaints,
+      selectedfindings,
+      selectedprocedure,
+      prescriptionInputs,
+      planDetails,
+      uploadedImages,
+      selectedTests,
+      selectedDate,
+    };
+    localStorage.setItem('prescriptionDetailsState', JSON.stringify(stateToSave));
+  }, [
+    patientData,
+    selectedDiagnosis,
+    selectedcomplaints,
+    selectedfindings,
+    selectedprocedure,
+    prescriptionInputs,
+    planDetails,
+    uploadedImages,
+    selectedTests,
+    selectedDate,
+  ]);
+
+  const handleSelectDiagnosis = (diagnosis) => setSelectedDiagnosis(diagnosis);
+  const handleSelectcomplaints = (complaints) => setSelectedComplaints(complaints);
+  const handleSelectfindings = (findings) => setSelectedFindings(findings);
+  const handleSelectprocedure = (procedure) => setSelectedprocedure(procedure);
+  const handleSelectTests = (tests) => setSelectedTests(tests);
+
+  // const handleDateChange = (date) => setSelectedDate(date);
+
 const [showModal, setShowModal] = useState(false); // State to control modal visibility
 const handleModalOpen = () => setShowModal(true); // Open modal
 const handleModalClose = () => setShowModal(false); // Close modal
 
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const [selectedTests, setSelectedTests] = useState([]);
-   const [selectedDate, setSelectedDate] = useState(null);
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
   const formatDate = (date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.error('Invalid date:', date);
+      return 'Invalid Date';
+    }
+    
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
+  
       // Function to handle image upload
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -409,6 +482,15 @@ const handleModalClose = () => setShowModal(false); // Close modal
     setUploadedImages(prevImages => [...prevImages, ...uploaded]);
     setImages(prevImages => [...prevImages, ...files]);
   };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setUploadedImages(prevImages =>
+      prevImages.filter((_, index) => index !== indexToRemove)
+    );
+    setImages(prevImages =>
+      prevImages.filter((_, index) => index !== indexToRemove)
+    );
+  };
   const handleSubmit2 = async () => {
     if (images.length === 0) {
       setMessage('Please select at least one image');
@@ -472,7 +554,50 @@ const handleModalClose = () => setShowModal(false); // Close modal
         console.error('Error saving data', error);
     }
 };
+const [pdfFiles, setPdfFiles] = useState([]);
+const [uploadedPdfs, setUploadedPdfs] = useState([]);
 
+
+const handleFileChange2 = (e) => {
+  const files = Array.from(e.target.files);
+  const uploaded = files.map((file) => ({
+    name: file.name,
+  }));
+  setUploadedPdfs(prevPdfs => [...prevPdfs, ...uploaded]);
+  setPdfFiles(prevPdfs => [...prevPdfs, ...files]);
+};
+
+const handleRemoveFile = (indexToRemove) => {
+  setUploadedPdfs(prevPdfs =>
+    prevPdfs.filter((_, index) => index !== indexToRemove)
+  );
+  setPdfFiles(prevPdfs =>
+    prevPdfs.filter((_, index) => index !== indexToRemove)
+  );
+};
+
+const handleSubmit3 = async () => {
+  if (pdfFiles.length === 0) {
+    setMessage('Please select at least one PDF file');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('patient_name', `${appointment.patientName}_${appointment.patientUID}_${appointmentDate}`);
+  pdfFiles.forEach(pdf => formData.append('pdf_files', pdf)); // Append each PDF to formData
+
+  try {
+    const response = await axios.post('http://127.0.0.1:8000/upload_pdf/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    setMessage('PDFs uploaded successfully');
+  } catch (error) {
+    console.error('Error uploading PDFs:', error);
+    setMessage('Failed to upload PDFs');
+  }
+};
 const handleSubmitAll = async (e) => {
   e.preventDefault();
   try {
@@ -588,7 +713,7 @@ const getSummaryDetails = () => {
       <SummaryItemTitle>Images</SummaryItemTitle>
       <ImageContainer>
         {uploadedImages.map((image, index) => (
-          <img key={index} src={image.src} alt={image.alt} style={{ maxWidth: '100%', height: 'auto', margin: '10px' }} />
+          <img key={index} src={image.src} alt={image.alt} style={{ maxWidth: '10%', height: 'auto', margin: '10px' }} />
         ))}
         {uploadedImages.length === 0 && <UploadText>No images uploaded</UploadText>}
       </ImageContainer>
@@ -617,15 +742,12 @@ const getSummaryDetails = () => {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const headerFooterHeight = 35;
-
     // Convert images to Base64
     convertToBase64(PDFHeader, headerImage => {
       convertToBase64(PDFFooter, footerImage => {
         // Header Image - Full width
         pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerFooterHeight);
-
         let startY = headerFooterHeight + 10;
-
         // Function to create sub-table rows for sections with multiple entries
         const createSubTableRows = (label, entries) => {
           if (!entries || entries.length === 0) {
@@ -633,23 +755,18 @@ const getSummaryDetails = () => {
           }
           return entries.map((entry, index) => [index === 0 ? label : '', entry]);
         };
-
         // Prepare the data for the table
         let data = [];
-
         data = data.concat(createSubTableRows('Diagnosis', selectedDiagnosis.map(d => d.diagnosis)));
         data = data.concat(createSubTableRows('Complaints', selectedcomplaints.map(c => c.complaints)));
         data = data.concat(createSubTableRows('Findings', selectedfindings.map(f => f.findings)));
-
         // Procedures need special handling to include the date
         data = data.concat(createSubTableRows('Procedures', selectedprocedure.map(p => `${p.selectedProcedures.map(proc => proc.procedure).join(', ')} - Date: ${p.selectedDate ? formatDate(new Date(p.selectedDate)) : 'None'}`)));
-
         // The rest of the data remains as single entries
         data.push(['Prescription', prescriptionSummary]);
         data.push(['Plans', `${planDetails.plan1 || 'None'}, ${planDetails.plan2 || 'None'}, ${planDetails.plan3 || 'None'}`]);
         data = data.concat(createSubTableRows('Tests', selectedTests.map(test => test.test)));
         data.push(['Next Visit Date', selectedDate ? selectedDate.toLocaleDateString() : 'None']);
-
         // Create a single table with all the data and adjust the table width
         pdf.autoTable({
           startY,
@@ -674,25 +791,28 @@ const getSummaryDetails = () => {
             pdf.addImage(footerImage, 'PNG', 0, pageHeight - headerFooterHeight, pageWidth, headerFooterHeight);
           }
         });
-
-        // Add images
+        // Add images in passport size (e.g., 35mm x 45mm)
         let currentY = pdf.lastAutoTable.finalY + 10;
+        const imageWidth = 35; // Width for passport-size image
+        const imageHeight = 45; // Height for passport-size image
+        const imagesPerRow = Math.floor((pageWidth - 20) / (imageWidth + 5)); // Calculate how many images fit in a row
         uploadedImages.forEach((img, index) => {
-          const imageHeight = 50;
-          if (currentY + imageHeight > pageHeight - headerFooterHeight - 20) {
-            pdf.addPage();
-            currentY = headerFooterHeight + 10;
+          const x = 10 + (index % imagesPerRow) * (imageWidth + 5);
+          if (index > 0 && index % imagesPerRow === 0) {
+            currentY += imageHeight + 5;
+            if (currentY + imageHeight > pageHeight - headerFooterHeight - 20) {
+              pdf.addPage();
+              currentY = headerFooterHeight + 10;
+            }
           }
-          pdf.addImage(img.src, 'JPEG', 10, currentY, 50, imageHeight);
-          currentY += imageHeight + 5;
+          pdf.addImage(img.src, 'JPEG', x, currentY, imageWidth, imageHeight);
         });
-
         // Save the PDF
-        pdf.save('report.pdf');
+        pdf.save(appointment.patientName+'_'+appointment.patientUID+'_'+appointmentDate);
       });
     });
   };
-
+  
   return (
     <div ref={summaryRef}>
       {summaryContent}
@@ -738,34 +858,53 @@ const getSummaryDetails = () => {
 
         <ContainerRow>
          <Diagnosis onSelectDiagnosis={handleSelectDiagnosis} />
-            <ImageContainer>
-              <label htmlFor="upload-button" style={{ cursor: 'pointer' }}>
-                <BiImageAdd style={{ fontSize: '3rem', color: '#757575' }} />
-              </label>
-              
-              <Form.Group controlId="formFileMultiple" className="mb-3">
-                <label htmlFor="upload-button" style={{ cursor: 'pointer' }}>
-                </label>
-                <input
-                  id="upload-button"
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
-                />
-              </Form.Group>
-              
-              {uploadedImages.map((image, index) => (
-                <Row key={index}>
-                  <Col>
-                    <UploadedImage src={image.src} alt={image.alt} />
-                  </Col>
-                </Row>
-              ))}
-              {uploadedImages.length === 0 && (
-                <UploadText></UploadText>
-              )}
-            </ImageContainer>
+         <ImageContainer>
+      <label htmlFor="upload-button" style={{ cursor: 'pointer' }}>
+        <BiImageAdd style={{ fontSize: '3rem', color: '#757575' }} />
+      </label>
+
+      <Form.Group controlId="formFileMultiple" className="mb-3">
+        <input
+          id="upload-button"
+          type="file"
+          multiple
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+      </Form.Group>
+
+      {uploadedImages.length === 0 && (
+        <UploadText>No images uploaded yet.</UploadText>
+      )}
+
+      {uploadedImages.map((image, index) => (
+        <Row key={index} className="mb-2">
+          <Col>
+            <UploadedImage src={image.src} alt={image.alt} />
+          </Col>
+          <Col>
+            <BiTrash
+              style={{ cursor: 'pointer', fontSize: '2rem', color: '#ff0000' }}
+              onClick={() => handleRemoveImage(index)}
+            />
+          </Col>
+        </Row>
+      ))}
+
+    </ImageContainer>
+    <PdfContainer>
+      <input type="file" accept="application/pdf" multiple onChange={handleFileChange2} />
+      <button onClick={handleSubmit3}>Upload PDFs</button>
+      {message && <p>{message}</p>}
+      <ul>
+        {uploadedPdfs.map((pdf, index) => (
+          <PdfItem key={index}>
+            {pdf.name}
+            <RemoveButton onClick={() => handleRemoveFile(index)}>Remove</RemoveButton>
+          </PdfItem>
+        ))}
+      </ul>
+    </PdfContainer>
          </ContainerRow>
          <ContainerRow>
             <Complaints onSelectComplaints ={handleSelectcomplaints}/>

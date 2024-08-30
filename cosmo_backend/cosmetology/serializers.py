@@ -82,7 +82,7 @@ from .models import BillingData
 class BillingDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = BillingData
-        fields = ['patientName', 'appointmentDate', 'table_data','patientUID']
+        fields = '__all__'
 
 
 from .models import Diagnosis,Complaints,Findings,Tests,Procedure
