@@ -193,7 +193,7 @@ export const PdfContainer = styled.section`
   flex: 1;
   margin-right: 10px;
   padding: 20px;
-  background-color: #c8d6e5; // Light blue background
+  background-color:  #b798c0; // Light blue background
   border-radius: 10px;
   display: flex;
   flex-wrap: wrap;

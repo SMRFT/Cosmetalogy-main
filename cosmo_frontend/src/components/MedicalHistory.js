@@ -284,7 +284,22 @@ const ProceduresList = styled.ul`
 const ProceduresItem = styled.li`
     margin-bottom: 5px;
 `;
+const PdfButton = styled.a`
+    display: block;
+    background-color: #4CAF50;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    margin: 10px 0;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
 
+    &:hover {
+        background-color: #45a049;
+    }
+`;
 const MedicalHistory = () => {
    const location = useLocation();
     const { appointment, patientUID } = location.state || {};
@@ -509,30 +524,43 @@ const MedicalHistory = () => {
     <tr>
         <SectionTitle>Records & Images</SectionTitle>
         <ImageCell>
-            {imageSrcs[selectedAppointment.appointmentDate].images.map((src, imgIndex) => (
-                <img key={imgIndex} src={src} alt={`Patient image ${imgIndex + 1}`} style={{ width: '100px' }} />
+        {imageSrcs[selectedAppointment.appointmentDate]?.images?.length > 0 && (
+    <Section>
+        <SectionTitle>Records & Images</SectionTitle>
+       
+            {imageSrcs[selectedAppointment.appointmentDate].images.map((image, imgIndex) => (
+                <img 
+                    key={imgIndex} 
+                    src={image.src} 
+                    alt={image.filename} 
+                    style={{ width: '100px' }} 
+                />
             ))}
+       
+    </Section>
+)}
+
         </ImageCell>
     </tr>
 )}
 
 {imageSrcs[selectedAppointment.appointmentDate] && imageSrcs[selectedAppointment.appointmentDate].pdfs.length > 0 && (
-    <tr>
+    <Section>
         <SectionTitle>PDF Documents</SectionTitle>
-        <PdfCell>
-            {imageSrcs[selectedAppointment.appointmentDate].pdfs.map((pdfSrc, pdfIndex) => (
-                <a 
+        <div>
+            {imageSrcs[selectedAppointment.appointmentDate].pdfs.map((pdf, pdfIndex) => (
+                <PdfButton 
                     key={pdfIndex} 
-                    href={pdfSrc} 
+                    href={pdf.src} 
                     target="_blank" 
-                    rel="noopener noreferrer" 
-                    style={{ display: 'block', margin: '10px 0' }}>
+                    rel="noopener noreferrer">
                     View PDF {pdfIndex + 1}
-                </a>
+                </PdfButton>
             ))}
-        </PdfCell>
-    </tr>
+        </div>
+    </Section>
 )}
+
 
                         </Section>
 
